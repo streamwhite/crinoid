@@ -23,8 +23,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
       - run: pnpm typecheck
+      - run: pnpm typecheck:package
+      - run: pnpm typecheck:reference
       - run: pnpm test
-      - run: pnpm i18n:verify
 
   package:
     needs: quality
@@ -41,16 +42,10 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - name: Install RPM tooling
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install --yes rpm squashfs-tools
-      - name: Verify RPM tooling
-        if: matrix.os == 'ubuntu-latest'
-        run: command -v rpmbuild && command -v mksquashfs
       - run: pnpm install --frozen-lockfile
-      - run: pnpm make
+      - run: pnpm --filter reference-app package
       - uses: actions/upload-artifact@v4
         with:
-          name: electron-${{ matrix.os }}
-          path: out/make
+          name: reference-app-${{ matrix.os }}
+          path: examples/reference-app/out
           if-no-files-found: error

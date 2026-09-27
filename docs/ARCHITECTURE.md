@@ -4,7 +4,7 @@
 
 The main process owns Electron and operating-system APIs. The preload script exposes the smallest typed capabilities required by the renderer. The renderer contains React UI only and must not import `electron` or Node.js modules.
 
-The workspace packages separate scaffold generation (`create-electron-app`) from reusable runtime contracts (`electron-core`, `electron-ipc`, `electron-config`, `electron-storage`, and `electron-window`).
+The workspace packages separate scaffold generation (`create-crinoid`) from reusable runtime contracts (`electron-core`, `electron-ipc`, `electron-config`, `electron-storage`, and `electron-window`).
 
 ## Security
 

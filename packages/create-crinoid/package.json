@@ -1,0 +1,22 @@
+{
+  "name": "create-crinoid",
+  "version": "0.1.0",
+  "description": "Create a new Electron desktop app that depends on crinoid.",
+  "license": "MIT",
+  "author": "Template Maintainers",
+  "type": "module",
+  "bin": {
+    "create-crinoid": "src/cli.mjs"
+  },
+  "files": [
+    "src",
+    "template"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.piaosiyuan.cn/js/"
+  }
+}

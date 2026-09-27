@@ -1,0 +1,322 @@
+{
+  "name": "crinoid",
+  "version": "0.1.0",
+  "description": "Reusable Electron main/preload/renderer infrastructure as a normal package.",
+  "license": "MIT",
+  "author": "Template Maintainers",
+  "type": "module",
+  "files": [
+    "src",
+    "forge.mjs",
+    "forge.d.mts",
+    "vite.mjs",
+    "vite.d.mts",
+    "CHANGELOG.md",
+    "API.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./main": {
+      "types": "./src/main.ts",
+      "default": "./src/main.ts"
+    },
+    "./preload": {
+      "types": "./src/preload.ts",
+      "default": "./src/preload.ts"
+    },
+    "./react": {
+      "types": "./src/react.tsx",
+      "default": "./src/react.tsx"
+    },
+    "./ipc": {
+      "types": "./src/ipc.ts",
+      "default": "./src/ipc.ts"
+    },
+    "./storage": {
+      "types": "./src/storage.ts",
+      "default": "./src/storage.ts"
+    },
+    "./config": {
+      "types": "./src/config.ts",
+      "default": "./src/config.ts"
+    },
+    "./environment": {
+      "types": "./src/environment.ts",
+      "default": "./src/environment.ts"
+    },
+    "./lifecycle": {
+      "types": "./src/lifecycle.ts",
+      "default": "./src/lifecycle.ts"
+    },
+    "./errors": {
+      "types": "./src/errors.ts",
+      "default": "./src/errors.ts"
+    },
+    "./logging": {
+      "types": "./src/logging.ts",
+      "default": "./src/logging.ts"
+    },
+    "./window": {
+      "types": "./src/window.ts",
+      "default": "./src/window.ts"
+    },
+    "./dialogs": {
+      "types": "./src/dialogs.ts",
+      "default": "./src/dialogs.ts"
+    },
+    "./shortcuts": {
+      "types": "./src/shortcuts.ts",
+      "default": "./src/shortcuts.ts"
+    },
+    "./tray": {
+      "types": "./src/tray.ts",
+      "default": "./src/tray.ts"
+    },
+    "./menu": {
+      "types": "./src/menu.ts",
+      "default": "./src/menu.ts"
+    },
+    "./context-menu": {
+      "types": "./src/context-menu.ts",
+      "default": "./src/context-menu.ts"
+    },
+    "./integration": {
+      "types": "./src/integration.ts",
+      "default": "./src/integration.ts"
+    },
+    "./reactive": {
+      "types": "./src/reactive.ts",
+      "default": "./src/reactive.ts"
+    },
+    "./persistent": {
+      "types": "./src/persistent.ts",
+      "default": "./src/persistent.ts"
+    },
+    "./state-sync": {
+      "types": "./src/state-sync.ts",
+      "default": "./src/state-sync.ts"
+    },
+    "./preferences": {
+      "types": "./src/preferences.ts",
+      "default": "./src/preferences.ts"
+    },
+    "./recent-items": {
+      "types": "./src/recent-items.ts",
+      "default": "./src/recent-items.ts"
+    },
+    "./paths": {
+      "types": "./src/paths.ts",
+      "default": "./src/paths.ts"
+    },
+    "./mime": {
+      "types": "./src/mime.ts",
+      "default": "./src/mime.ts"
+    },
+    "./fs": {
+      "types": "./src/fs.ts",
+      "default": "./src/fs.ts"
+    },
+    "./stream": {
+      "types": "./src/stream.ts",
+      "default": "./src/stream.ts"
+    },
+    "./watch": {
+      "types": "./src/watch.ts",
+      "default": "./src/watch.ts"
+    },
+    "./clipboard": {
+      "types": "./src/clipboard.ts",
+      "default": "./src/clipboard.ts"
+    },
+    "./notifications": {
+      "types": "./src/notifications.ts",
+      "default": "./src/notifications.ts"
+    },
+    "./shell": {
+      "types": "./src/shell.ts",
+      "default": "./src/shell.ts"
+    },
+    "./system": {
+      "types": "./src/system.ts",
+      "default": "./src/system.ts"
+    },
+    "./power": {
+      "types": "./src/power.ts",
+      "default": "./src/power.ts"
+    },
+    "./network": {
+      "types": "./src/network.ts",
+      "default": "./src/network.ts"
+    },
+    "./secrets": {
+      "types": "./src/secrets.ts",
+      "default": "./src/secrets.ts"
+    },
+    "./websocket": {
+      "types": "./src/websocket.ts",
+      "default": "./src/websocket.ts"
+    },
+    "./sse": {
+      "types": "./src/sse.ts",
+      "default": "./src/sse.ts"
+    },
+    "./transfers": {
+      "types": "./src/transfers.ts",
+      "default": "./src/transfers.ts"
+    },
+    "./proxy": {
+      "types": "./src/proxy.ts",
+      "default": "./src/proxy.ts"
+    },
+    "./auth": {
+      "types": "./src/auth.ts",
+      "default": "./src/auth.ts"
+    },
+    "./deep-link": {
+      "types": "./src/deep-link.ts",
+      "default": "./src/deep-link.ts"
+    },
+    "./single-instance": {
+      "types": "./src/single-instance.ts",
+      "default": "./src/single-instance.ts"
+    },
+    "./auto-launch": {
+      "types": "./src/auto-launch.ts",
+      "default": "./src/auto-launch.ts"
+    },
+    "./cache": {
+      "types": "./src/cache.ts",
+      "default": "./src/cache.ts"
+    },
+    "./database": {
+      "types": "./src/database.ts",
+      "default": "./src/database.ts"
+    },
+    "./sqlite": {
+      "types": "./src/sqlite.ts",
+      "default": "./src/sqlite.ts"
+    },
+    "./tasks": {
+      "types": "./src/tasks.ts",
+      "default": "./src/tasks.ts"
+    },
+    "./crash-reporting": {
+      "types": "./src/crash-reporting.ts",
+      "default": "./src/crash-reporting.ts"
+    },
+    "./metrics": {
+      "types": "./src/metrics.ts",
+      "default": "./src/metrics.ts"
+    },
+    "./trace": {
+      "types": "./src/trace.ts",
+      "default": "./src/trace.ts"
+    },
+    "./feedback": {
+      "types": "./src/feedback.ts",
+      "default": "./src/feedback.ts"
+    },
+    "./i18n": {
+      "types": "./src/i18n.ts",
+      "default": "./src/i18n.ts"
+    },
+    "./observability": {
+      "types": "./src/observability.ts",
+      "default": "./src/observability.ts"
+    },
+    "./search": {
+      "types": "./src/search.ts",
+      "default": "./src/search.ts"
+    },
+    "./command-palette": {
+      "types": "./src/command-palette.ts",
+      "default": "./src/command-palette.ts"
+    },
+    "./favorites": {
+      "types": "./src/favorites.ts",
+      "default": "./src/favorites.ts"
+    },
+    "./history": {
+      "types": "./src/history.ts",
+      "default": "./src/history.ts"
+    },
+    "./settings": {
+      "types": "./src/settings.ts",
+      "default": "./src/settings.ts"
+    },
+    "./about": {
+      "types": "./src/about.ts",
+      "default": "./src/about.ts"
+    },
+    "./help": {
+      "types": "./src/help.ts",
+      "default": "./src/help.ts"
+    },
+    "./keybindings": {
+      "types": "./src/keybindings.ts",
+      "default": "./src/keybindings.ts"
+    },
+    "./drag-drop": {
+      "types": "./src/drag-drop.ts",
+      "default": "./src/drag-drop.ts"
+    },
+    "./testing": {
+      "types": "./src/testing/index.ts",
+      "default": "./src/testing/index.ts"
+    },
+    "./testing/react": {
+      "types": "./src/testing/react.tsx",
+      "default": "./src/testing/react.tsx"
+    },
+    "./testing/e2e": {
+      "types": "./src/testing/e2e.ts",
+      "default": "./src/testing/e2e.ts"
+    },
+    "./data-transfer": {
+      "types": "./src/data-transfer.ts",
+      "default": "./src/data-transfer.ts"
+    },
+    "./indexeddb": {
+      "types": "./src/indexeddb.ts",
+      "default": "./src/indexeddb.ts"
+    },
+    "./security": {
+      "types": "./src/security.ts",
+      "default": "./src/security.ts"
+    },
+    "./api": {
+      "types": "./src/api.ts",
+      "default": "./src/api.ts"
+    },
+    "./forge": {
+      "types": "./forge.d.mts",
+      "default": "./forge.mjs"
+    },
+    "./vite": {
+      "types": "./vite.d.mts",
+      "default": "./vite.mjs"
+    },
+    "./types": {
+      "types": "./src/types.ts",
+      "default": "./src/types.ts"
+    }
+  },
+  "peerDependencies": {
+    "electron": ">=28",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "react-intl": "^12.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.piaosiyuan.cn/js/"
+  }
+}

@@ -1,1 +1,0 @@
-{"app.name":"桌面模板","app.eyebrow":"基础设施 / 默认安全","app.title":"在可靠基础上构建桌面产品。","app.subtitle":"Electron 基础设施已经就绪，你可以专注于产品功能。","navigation.home":"概览","navigation.settings":"设置","theme.label":"主题","theme.system":"系统","theme.light":"浅色","theme.dark":"深色","window.minimize":"最小化","status.ready":"基础设施就绪","status.description":"渲染进程与 Node.js 隔离，原生能力通过类型化 IPC 暴露。"}

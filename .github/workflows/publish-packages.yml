@@ -1,0 +1,46 @@
+name: Publish packages
+
+# Plain publish, same as any npm library: bump the version in the package's
+# package.json, commit, tag, push. Publishes to the crinoid private registry by
+# default; pass the `registry` input to override it.
+on:
+  push:
+    tags: ['pkg-v*.*.*']
+  workflow_dispatch:
+    inputs:
+      registry:
+        description: npm-compatible registry URL
+        required: false
+        default: https://registry.piaosiyuan.cn/js/
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: ${{ inputs.registry || 'https://registry.piaosiyuan.cn/js/' }}
+      - name: Install dependencies
+        env:
+          PNPM_CONFIG_BLOCK_EXOTIC_SUBDEPS: false
+        run: pnpm install --frozen-lockfile
+      - name: Verify types and tests
+        run: |
+          pnpm typecheck
+          pnpm typecheck:package
+          pnpm typecheck:reference
+          pnpm test
+      - name: Publish changed packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: node scripts/publish-packages.mjs --registry "${{ inputs.registry || 'https://registry.piaosiyuan.cn/js/' }}"

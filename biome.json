@@ -1,1 +1,1 @@
-{"$schema":"https://biomejs.dev/schemas/2.2.2/schema.json","files":{"includes":["src/**/*.ts","src/**/*.tsx","tests/**/*.ts"]},"formatter":{"enabled":true,"indentStyle":"space"},"linter":{"enabled":true,"rules":{"recommended":true}}}
+{"$schema":"https://biomejs.dev/schemas/2.2.2/schema.json","files":{"includes":["tests/**/*.ts","tests/**/*.tsx","tests/**/*.mjs"]},"formatter":{"enabled":true,"indentStyle":"space"},"linter":{"enabled":true,"rules":{"recommended":true}}}

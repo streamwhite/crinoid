@@ -1,9 +1,0 @@
-{
-  "name": "@your-scope/create-electron-app",
-  "version": "0.1.0",
-  "type": "module",
-  "bin": { "create-electron-app": "src/cli.mjs" },
-  "files": ["src", "template"],
-  "engines": { "node": ">=20" },
-  "publishConfig": { "access": "public" }
-}

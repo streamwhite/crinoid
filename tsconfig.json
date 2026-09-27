@@ -10,9 +10,7 @@
     "jsx": "react-jsx",
     "isolatedModules": true,
     "noEmit": true,
-    "types": ["node", "vitest/globals"],
-    "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] }
+    "types": ["node", "vitest/globals"]
   },
-  "include": ["src", "tests", "vite.config.mts", "vitest.config.mts", "forge.config.ts"]
+  "include": ["tests", "vitest.config.mts"]
 }

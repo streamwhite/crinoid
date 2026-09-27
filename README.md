@@ -1,45 +1,74 @@
-# Electron Desktop Application Template
+# Crinoid
 
-Secure Electron + React + Vite + TypeScript starter with an explicit main/preload/renderer boundary.
+Secure Electron + React + Vite + TypeScript infrastructure published as a normal package.
 
-The workspace also contains reusable packages under `packages/` and the scaffold CLI:
+## Consume as a package
+
+The Electron infrastructure is published as `crinoid` and consumed like React or Vite:
 
 ```bash
-pnpm --filter @your-scope/create-electron-app exec create-electron-app my-app
+pnpm add crinoid
 ```
+
+New projects import infrastructure from the package instead of copying it. See `packages/crinoid/README.md` for the consumer contract and `examples/reference-app` for a complete working consumer.
+
+```bash
+pnpm update crinoid
+```
+
+Updates reach existing consumers through normal package management. The package never modifies consumer source files.
+
+## Scaffold
+
+The optional initializer creates thin process entrypoints that depend on the package:
+
+```bash
+node packages/create-crinoid/src/cli.mjs my-app
+```
+
+## Repository layout
+
+- `packages/crinoid` — the published runtime package (main, preload, renderer, and native infrastructure).
+- `packages/create-crinoid` — optional initializer and its thin project template.
+- `examples/reference-app` — package consumer used by the typechecks.
+- `tests` — package unit, component, and IPC contract tests.
 
 ## Development
 
 ```bash
 PNPM_CONFIG_BLOCK_EXOTIC_SUBDEPS=false pnpm install
-pnpm dev
-```
-
-## Architecture
-
-- `src/main`: trusted Electron and OS integration.
-- `src/preload`: narrow capability bridge exposed as `window.desktop`.
-- `src/renderer`: React UI with no direct Node.js or Electron imports.
-- `src/shared`: process-safe contracts and types.
-
-IPC handlers validate the sender and input. The default window enables context isolation and sandboxing, disables Node integration, and applies an external URL allowlist.
-
-## Standard checks
-
-```bash
 pnpm test
 pnpm typecheck
-pnpm i18n:extract
-pnpm i18n:verify
-pnpm package
-pnpm make
-pnpm publish
+pnpm typecheck:package
+pnpm typecheck:reference
+pnpm format:check
 ```
 
-`pnpm make` creates artifacts for the current runner only. Windows installers (`Setup.exe`) must be made on a Windows runner, macOS artifacts on macOS, and Linux artifacts on Linux. Use `pnpm make:windows`, `pnpm make:macos`, `pnpm make:linux`, `pnpm make:rpm`, or `pnpm make:appimage` on the corresponding platform. RPM generation requires `rpmbuild` on the Linux runner. On Ubuntu/Debian install it with `sudo apt-get install rpm`; Fedora/RHEL uses `sudo dnf install rpm-build`. AppImage generation requires `mksquashfs`; on Ubuntu/Debian install it with `sudo apt-get install squashfs-tools`. Both dedicated scripts check their prerequisite before invoking Forge. The CI workflow uploads each platform's `out/make` directory as an artifact.
+Run the reference consumer locally with `pnpm --filter reference-app dev`, or build its packaged app with `pnpm --filter reference-app package` (output in `examples/reference-app/out`; run on the target platform).
 
-`pnpm make` uses a content-addressed local cache in `.cache/electron-make`. It hashes source files, workspace packages, packaging configuration, lockfile, Node version, target arguments, and signing mode. On a cache hit Forge receives `--skip-package`, so the Vite/Electron package is reused while the installer is regenerated. Force a full rebuild with:
+## Release
+
+Package versioning and publishing are tool-driven:
 
 ```bash
-pnpm make -- --force
+pnpm release:packages           # bump patch, sync versions, promote CHANGELOG, verify, commit, tag pkg-vX.Y.Z, push
+pnpm release:packages minor     # or minor / major / an explicit version
+pnpm release:packages patch --dry-run   # preview every file change first
 ```
+
+`scripts/release-packages.mjs` keeps both published packages (`crinoid` and
+`create-crinoid`) in lockstep, updates the scaffold template's dependency range, promotes the
+`## Unreleased` CHANGELOG section to the new version, runs the typechecks and tests, then commits and
+pushes the `pkg-vX.Y.Z` tag. Pushing the tag triggers `.github/workflows/publish-packages.yml`, which
+runs `scripts/publish-packages.mjs` to publish only versions that are not already on the registry.
+
+Publishing targets the private registry `https://registry.piaosiyuan.cn/js/` configured in `.npmrc`
+(and each package's `publishConfig.registry`). CI passes it through to `scripts/publish-packages.mjs`
+on the `pkg-vX.Y.Z` tag. To publish manually against a different npm-compatible registry:
+
+```bash
+node scripts/publish-packages.mjs --registry https://npm.corp.internal/
+```
+
+Private workspace packages are skipped automatically. Add the matching `CHANGELOG.md` entry (under
+`## Unreleased`) before running the release script.
