@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { environmentFromProcess, resolveEnvironment } from 'crinoid/environment'
+import {
+  APP_ENVIRONMENTS,
+  environmentFromProcess,
+  isAppEnvironment,
+  readEnvValue,
+  resolveEnvironment
+} from 'crinoid/environment'
 
 describe('environment resolution', () => {
   it('defaults to development when the application is not packaged', () => {
@@ -22,5 +28,19 @@ describe('environment resolution', () => {
 
   it('reads from a process-like environment record', () => {
     expect(environmentFromProcess({ NODE_ENV: 'production' }, false).isProduction).toBe(true)
+  })
+})
+
+describe('environment helpers', () => {
+  it('recognizes only the known environment names', () => {
+    expect(APP_ENVIRONMENTS).toEqual(['development', 'test', 'production'])
+    expect(isAppEnvironment('test')).toBe(true)
+    expect(isAppEnvironment('staging')).toBe(false)
+  })
+
+  it('reads trimmed env values and treats blank values as absent', () => {
+    expect(readEnvValue({ API_URL: '  https://api.example.com  ' }, 'API_URL')).toBe('https://api.example.com')
+    expect(readEnvValue({ API_URL: '   ' }, 'API_URL')).toBeNull()
+    expect(readEnvValue({}, 'API_URL')).toBeNull()
   })
 })

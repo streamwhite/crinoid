@@ -30,13 +30,14 @@ export function createDesktopConfig(options: {
   features?: Partial<FeatureFlags>
   protocol?: string
 }): DesktopConfig {
-  if (options.apiBaseUrl && new URL(options.apiBaseUrl).protocol !== 'https:') {
+  const apiBaseUrl = options.apiBaseUrl?.trim() || null
+  if (apiBaseUrl && new URL(apiBaseUrl).protocol !== 'https:') {
     throw new Error('API base URL must use HTTPS')
   }
   return {
     appName: options.appName,
     defaultLocale: options.defaultLocale?.trim() || 'en',
-    apiBaseUrl: options.apiBaseUrl?.trim() || null,
+    apiBaseUrl,
     protocol: options.protocol ?? 'myapp',
     features: { ...DEFAULT_FEATURES, ...options.features }
   }

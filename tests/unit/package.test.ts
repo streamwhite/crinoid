@@ -80,6 +80,16 @@ describe('module runtime', () => {
     expect(firstCapabilities.seen).toBe(true)
     expect(calls).toEqual(['alpha:init', 'beta:init', 'alpha:dispose'])
   })
+
+  it('skips modules without hooks and defaults to an empty runtime', async () => {
+    const empty = createModuleRuntime()
+    await expect(empty.initialize(new Set())).resolves.toBeUndefined()
+    await expect(empty.dispose()).resolves.toBeUndefined()
+
+    const plain = createModuleRuntime([{ id: 'plain' }])
+    await expect(plain.initialize(new Set(['anything']))).resolves.toBeUndefined()
+    await expect(plain.dispose()).resolves.toBeUndefined()
+  })
 })
 
 describe('window registry', () => {

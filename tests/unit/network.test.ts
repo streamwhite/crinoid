@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createBrowserNetworkMonitor, createNetworkMonitor, readNetworkStatus } from 'crinoid/network'
+import { createBrowserNetworkMonitor, createNetworkMonitor, isBrowserOnline, readNetworkStatus } from 'crinoid/network'
 
 describe('network status', () => {
   it('reports online when connected', async () => {
@@ -27,9 +27,29 @@ describe('network monitor', () => {
     monitor.dispose()
     expect(subscription.removeEventListener).toHaveBeenCalled()
   })
+
+  it('ignores notifications that match the current connection state', () => {
+    const handlers = new Set<(online: boolean) => void>()
+    const subscription = {
+      addEventListener: (_event: string, listener: (online: boolean) => void) => handlers.add(listener),
+      removeEventListener: () => {}
+    }
+    const onChange = vi.fn()
+    createNetworkMonitor(subscription, { onChange, isOnline: () => true })
+
+    for (const handler of handlers) handler(true)
+
+    expect(onChange).not.toHaveBeenCalled()
+  })
 })
 
 describe('browser network monitor', () => {
+  it('reads the browser online flag', () => {
+    const global = { online: true, addEventListener: () => {}, removeEventListener: () => {} }
+
+    expect(isBrowserOnline(global)).toBe(true)
+    expect(isBrowserOnline({ ...global, online: false })).toBe(false)
+  })
   it('maps online/offline events and disposes', () => {
     const listeners = new Map<string, () => void>()
     const global = {

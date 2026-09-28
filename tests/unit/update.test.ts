@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compareVersions, isNewerVersion, parseVersion } from 'crinoid/tasks'
+import { compareVersions, isNewerVersion, isPrerelease, parseVersion } from 'crinoid/tasks'
 import { DEFAULT_CHANNELS, resolveChannel } from 'crinoid/tasks'
 import { createUpdateService } from 'crinoid/tasks'
 
@@ -19,6 +19,12 @@ describe('version management', () => {
   it('detects newer versions', () => {
     expect(isNewerVersion('1.2.0', '1.1.0')).toBe(true)
     expect(isNewerVersion('1.0.0', '1.0.0')).toBe(false)
+  })
+
+  it('detects prereleases and ignores build metadata', () => {
+    expect(isPrerelease('1.0.0-beta.2')).toBe(true)
+    expect(isPrerelease('1.0.0')).toBe(false)
+    expect(parseVersion('1.2.3+build.5')).toMatchObject({ major: 1, minor: 2, patch: 3, prerelease: null })
   })
 })
 

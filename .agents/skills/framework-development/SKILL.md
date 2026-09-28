@@ -281,6 +281,25 @@ Typed via `DesktopAPI` from `crinoid/ipc`. Fixed capability surface - there is n
 Stack used by the repo: Vitest + React Testing Library for unit/component, Playwright reserved for critical
 Electron flows. Stub native dialogs/notifications/shell - never depend on real OS UI in tests.
 
+### What to test (project policy)
+
+Test **this project's own logic**, not the libraries it wraps. Crinoid is the foundation for other apps,
+so regressions here are expensive; keep the suite focused but real.
+
+- **Add tests** for project-owned decisions: composition/wiring (`createMainProcess`, `exposeDesktopApi`
+  capability mapping), security policy, algorithms and parsers (path/MIME/version/keybinding/deep-link/
+  migration), persistence formats and defaults, and the React components/contexts defined here.
+- **Do not add tests** for thin passthroughs that only forward to a library or platform API (bare
+  `node:path` re-exports, inline `electron` ports such as `shell.openPath`/`dialog.*`/`clipboard` reads,
+  `node:os`/`process` reads). The dependency already covers them. A wrapper earns a test once it adds
+  branching, validation, defaults, or policy.
+- Avoid tests that only assert "a mocked library was called". Assert observable behavior instead.
+- Fix the implementation when a test uncovers a real defect; do not weaken the test or change production
+  code just to make a test simpler.
+- Run `pnpm test` (must stay green) and `pnpm typecheck` after adding tests.
+
+See `docs/TESTING-PLAN.md` for the scope rule and the current coverage of this policy.
+
 ## Build, package, release
 
 ```bash

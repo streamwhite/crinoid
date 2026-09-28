@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createDropController, hasDroppedFiles, readDroppedItems, readDroppedText } from 'crinoid/drag-drop'
-import { createKeybindingRegistry, formatKeybinding, matchesKeybinding, parseKeybinding } from 'crinoid/keybindings'
+import { createKeybindingRegistry, formatKeybinding, matchesKeybinding, parseKeybinding, platformName } from 'crinoid/keybindings'
 
 describe('keybindings', () => {
   it('resolves CmdOrCtrl per platform', () => {
@@ -25,6 +25,20 @@ describe('keybindings', () => {
     expect(action).toHaveBeenCalledTimes(1)
     registry.unregister('Ctrl+S')
     expect(registry.handle({ key: 's', ctrlKey: true })).toBe(false)
+  })
+
+  it('reports the platform and resolves modifier and key aliases', () => {
+    expect(platformName()).toBe(process.platform)
+    expect(parseKeybinding('Command+Option+Return', 'darwin')).toMatchObject({ key: 'enter', meta: true, alt: true })
+    expect(parseKeybinding('Control+Del', 'linux')).toMatchObject({ key: 'delete', ctrl: true })
+    expect(parseKeybinding('Ctrl+Up', 'linux')).toMatchObject({ key: 'arrowup', ctrl: true })
+    expect(parseKeybinding('   ', 'linux')).toEqual({ key: '', ctrl: false, meta: false, alt: false, shift: false })
+  })
+
+  it('formats multi-modifier, named-key, and empty bindings', () => {
+    expect(formatKeybinding('Ctrl+Shift+A', 'linux')).toBe('Ctrl+Shift+A')
+    expect(formatKeybinding('Ctrl+Escape', 'linux')).toBe('Ctrl+Escape')
+    expect(formatKeybinding('', 'linux')).toBe('')
   })
 })
 

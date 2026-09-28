@@ -33,9 +33,11 @@ function createEmitter(): Emitter {
 export interface MockWebContents {
   readonly messages: Array<{ channel: string; args: unknown[] }>
   readonly url: string
+  windowOpenHandler?: ((details: { url: string }) => unknown) | undefined
   send(channel: string, ...args: unknown[]): void
   getURL(): string
   on(event: string, listener: Listener): void
+  emit(event: string, ...args: unknown[]): void
   setWindowOpenHandler(handler: (details: { url: string }) => unknown): void
 }
 
@@ -72,6 +74,7 @@ export interface MockWindow {
   loadURL(url: string): Promise<void>
   loadFile(file: string): Promise<void>
   on(event: string, listener: Listener): void
+  once(event: string, listener: Listener): void
   emit(event: string, ...args: unknown[]): void
 }
 
@@ -168,9 +171,10 @@ export interface ElectronMock {
 function createWebContents(): MockWebContents {
   const emitter = createEmitter()
   const messages: Array<{ channel: string; args: unknown[] }> = []
-  return {
+  const contents: MockWebContents = {
     messages,
     url: 'file:///app/index.html',
+    windowOpenHandler: undefined,
     send: (channel, ...args) => {
       messages.push({ channel, args })
       emitter.emit('message', channel, ...args)
@@ -179,8 +183,14 @@ function createWebContents(): MockWebContents {
     on: (event, listener) => {
       emitter.on(event, listener)
     },
-    setWindowOpenHandler: () => {}
+    emit: (event, ...args) => {
+      emitter.emit(event, ...args)
+    },
+    setWindowOpenHandler: (handler) => {
+      contents.windowOpenHandler = handler
+    }
   }
+  return contents
 }
 
 export function createBrowserWindowConstructor(): MockBrowserWindowConstructor {
@@ -306,6 +316,14 @@ export function createBrowserWindowConstructor(): MockBrowserWindowConstructor {
 
     on(event: string, listener: Listener): void {
       this.listeners.on(event, listener)
+    }
+
+    once(event: string, listener: Listener): void {
+      const wrapped = (...args: unknown[]): void => {
+        this.listeners.off(event, wrapped)
+        listener(...args)
+      }
+      this.listeners.on(event, wrapped)
     }
 
     emit(event: string, ...args: unknown[]): void {

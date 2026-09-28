@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { createDatabase, runMigrations, type SqlDriver } from 'crinoid/database'
+import { createDatabase, createRepository, runMigrations, type SqlDriver } from 'crinoid/database'
 import { createSqliteDriver } from 'crinoid/sqlite'
 
 const directories: string[] = []
@@ -84,5 +84,51 @@ describe('database repository', () => {
     expect(rows).toEqual([{ id: 'n1', title: 'Hi' }])
     expect(found?.title).toBe('Hi')
     await database.close()
+  })
+})
+
+describe('repository query building', () => {
+  function recordingDriver(): { driver: SqlDriver; calls: Array<{ sql: string; params?: readonly unknown[] }> } {
+    const calls: Array<{ sql: string; params?: readonly unknown[] }> = []
+    const driver: SqlDriver = {
+      run: async (sql, params) => {
+        calls.push({ sql, ...(params === undefined ? {} : { params }) })
+      },
+      all: async () => [],
+      close: async () => {}
+    }
+    return { driver, calls }
+  }
+
+  it('rejects unsafe table and primary-key identifiers', () => {
+    const { driver } = recordingDriver()
+
+    expect(() => createRepository(driver, { table: 'notes; DROP TABLE notes', primaryKey: 'id' })).toThrow(
+      'Invalid SQL identifier'
+    )
+    expect(() => createRepository(driver, { table: 'notes', primaryKey: 'id; --' })).toThrow('Invalid SQL identifier')
+    expect(() => createRepository(driver, { table: 'notes', primaryKey: 'id' })).not.toThrow()
+  })
+
+  it('builds insert, update, and delete statements from the record columns', async () => {
+    const { driver, calls } = recordingDriver()
+    const repository = createRepository<{ id: string; title: string }>(driver, { table: 'notes', primaryKey: 'id' })
+
+    await repository.insert({ id: 'n1', title: 'Hi' })
+    await repository.update({ id: 'n1', title: 'Hello' })
+    await repository.remove('n1')
+
+    expect(calls).toEqual([
+      { sql: 'INSERT INTO notes (id, title) VALUES (?, ?)', params: ['n1', 'Hi'] },
+      { sql: 'UPDATE notes SET title = ? WHERE id = ?', params: ['Hello', 'n1'] },
+      { sql: 'DELETE FROM notes WHERE id = ?', params: ['n1'] }
+    ])
+  })
+
+  it('rejects unsafe record columns before writing', async () => {
+    const { driver } = recordingDriver()
+    const repository = createRepository<Record<string, unknown>>(driver, { table: 'notes', primaryKey: 'id' })
+
+    await expect(repository.insert({ 'bad column': 1 })).rejects.toThrow('Invalid SQL identifier')
   })
 })
