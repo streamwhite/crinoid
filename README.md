@@ -2,6 +2,18 @@
 
 Secure Electron + React + Vite + TypeScript infrastructure published as a normal package.
 
+## Coding agent skill
+
+Coding agents can install a skill covering the whole framework (main process, preload bridge, typed IPC,
+and every desktop capability) with:
+
+```bash
+npx skills add streamwhite/desktop-dev-template-electron -g
+```
+
+The skill lives in `.agents/skills/framework-development/` and is discovered by `npx skills` as well as by
+agents that read `.agents/skills/` directly.
+
 ## Consume as a package
 
 The Electron infrastructure is published as `crinoid` and consumed like React or Vite:
