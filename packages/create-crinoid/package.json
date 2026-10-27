@@ -2,8 +2,24 @@
   "name": "create-crinoid",
   "version": "0.1.0",
   "description": "Create a new Electron desktop app that depends on crinoid.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": "Template Maintainers",
+  "homepage": "https://github.com/streamwhite/desktop-dev-template-electron#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/streamwhite/desktop-dev-template-electron.git",
+    "directory": "packages/create-crinoid"
+  },
+  "bugs": {
+    "url": "https://github.com/streamwhite/desktop-dev-template-electron/issues"
+  },
+  "keywords": [
+    "electron",
+    "create",
+    "scaffold",
+    "template",
+    "crinoid"
+  ],
   "type": "module",
   "bin": {
     "create-crinoid": "src/cli.mjs"
@@ -16,7 +32,6 @@
     "node": ">=22"
   },
   "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.piaosiyuan.cn/js/"
+    "access": "public"
   }
 }

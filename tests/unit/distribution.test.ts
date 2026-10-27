@@ -9,8 +9,7 @@ const UMBRELLA = 'crinoid'
 const SCAFFOLD = 'create-crinoid'
 const PUBLISHED = [UMBRELLA, SCAFFOLD]
 
-const readManifest = (name: string) =>
-  JSON.parse(readFileSync(join(packagesDir, name, 'package.json'), 'utf8'))
+const readManifest = (name: string) => JSON.parse(readFileSync(join(packagesDir, name, 'package.json'), 'utf8'))
 
 describe('distribution model: one umbrella package', () => {
   const names = () => readdirSync(packagesDir)

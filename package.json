@@ -3,8 +3,12 @@
   "version": "0.1.0",
   "description": "Workspace for the crinoid package, scaffold, reference app, and tests.",
   "author": "Template Maintainers",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/streamwhite/desktop-dev-template-electron.git"
+  },
   "packageManager": "pnpm@12.3.4",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

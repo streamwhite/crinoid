@@ -1,48 +1,203 @@
 # Crinoid
 
-Secure Electron + React + Vite + TypeScript infrastructure published as a normal package.
-
-## Coding agent skill
-
-Coding agents can install a skill covering the whole framework (main process, preload bridge, typed IPC,
-and every desktop capability) with:
-
-```bash
-npx skills add streamwhite/desktop-dev-template-electron -g
-```
-
-The skill lives in `.agents/skills/framework-development/` and is discovered by `npx skills` as well as by
-agents that read `.agents/skills/` directly.
-
-## Consume as a package
-
-The Electron infrastructure is published as `crinoid` and consumed like React or Vite:
+Crinoid is a secure Electron + React + Vite + TypeScript desktop framework, published as the `crinoid`
+npm package. A project depends on it and writes business features only: reusable desktop infrastructure
+stays in the package, updates through normal dependency management, and never rewrites consumer source.
 
 ```bash
 pnpm add crinoid
 ```
 
-New projects import infrastructure from the package instead of copying it. See `packages/crinoid/README.md` for the consumer contract and `examples/reference-app` for a complete working consumer.
+One `createMainProcess` call wires environment detection, lifecycle, graceful shutdown, global error
+handling, structured logging, typed IPC with sender validation, a restrictive CSP, and the window registry.
+Everything it wires is also exported for manual composition.
+
+## Quick start
+
+### New app
 
 ```bash
-pnpm update crinoid
+pnpm dlx create-crinoid my-app
+cd my-app
+pnpm install
+pnpm dev
 ```
 
-Updates reach existing consumers through normal package management. The package never modifies consumer source files.
+`create-crinoid` writes a thin scaffold: main and preload entry points delegate to the package, and the
+renderer is a plain React app with locales and a `src/features/` folder for business code.
 
-## Scaffold
-
-The optional initializer creates thin process entrypoints that depend on the package:
+### Existing app
 
 ```bash
-node packages/create-crinoid/src/cli.mjs my-app
+pnpm add crinoid
+pnpm add react react-dom electron
 ```
+
+`electron`, `react`, and `react-dom` are peer dependencies. The three entry points are small:
+
+```ts
+// src/main/index.ts
+import { join } from 'node:path'
+import { createDesktopConfig } from 'crinoid/config'
+import { createMainProcess } from 'crinoid/main'
+
+const config = createDesktopConfig({ appName: 'My App' })
+
+createMainProcess({
+  config,
+  window: {
+    preloadPath: join(__dirname, 'preload.js'),
+    rendererFile: join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
+    devServerUrl: MAIN_WINDOW_VITE_DEV_SERVER_URL
+  }
+})
+```
+
+```ts
+// src/preload/index.ts
+import { exposeDesktopApi } from 'crinoid/preload'
+
+exposeDesktopApi()
+```
+
+```tsx
+// src/renderer/main.tsx
+import { createRoot } from 'react-dom/client'
+import { AppShell, DesktopProviders, ErrorBoundary } from 'crinoid/react'
+import messages from './locales/en/common.json'
+
+createRoot(document.getElementById('root')!).render(
+  <ErrorBoundary fallback={(error) => <p role="alert">{error.message}</p>}>
+    <DesktopProviders locale="en" messages={messages}>
+      <AppShell>Your application</AppShell>
+    </DesktopProviders>
+  </ErrorBoundary>
+)
+```
+
+The renderer reaches the operating system only through the typed `window.desktop` bridge. Import the
+`DesktopAPI` type from `crinoid/ipc` into `vite-env.d.ts` to type it globally.
+
+## Coding agent skill
+
+Crinoid ships a skill that teaches coding agents the process boundary, golden rules, `createMainProcess`
+options, every capability subpath, the renderer bridge, testing policy, and build/release workflow:
+
+```bash
+npx skills add streamwhite/desktop-dev-template-electron -g
+```
+
+The skill lives in [`.agents/skills/framework-development/SKILL.md`](.agents/skills/framework-development/SKILL.md)
+and is discovered by `npx skills` as well as agents that read `.agents/skills/` directly.
+
+## What is included
+
+`createMainProcess` already wires most of these. Import a subpath directly when you need finer control.
+See [`packages/crinoid/API.md`](packages/crinoid/API.md) for the complete public API.
+
+### Process foundation
+
+| Import | Provides |
+| --- | --- |
+| `crinoid/main` | `createMainProcess`, window and child-window creation, single-instance acquisition |
+| `crinoid/config` | `createDesktopConfig`, feature flags for tray, auto-update, deep links, and command palette |
+| `crinoid/environment` | `development` / `test` / `production` detection from `NODE_ENV` and packaging state |
+| `crinoid/lifecycle` | `ready` / `activate` / `window-all-closed` / `before-quit`, concurrent graceful shutdown with timeouts |
+| `crinoid/errors` | global `uncaughtException` / `unhandledRejection` handlers and error normalization |
+| `crinoid/logging` | leveled structured logger with console, multi-sink, and rotating-file sinks |
+| `crinoid/ipc` | typed channels, registry with sender/payload validation, invoker, `DesktopAPI` |
+| `crinoid/window` | window registry, bounds persistence, visibility checks across displays |
+
+### Windows and native interface
+
+Dialogs (open/save/directory/confirm), tray with minimize/close-to-tray, role-based menus, native context
+menus, global shortcuts, custom title bars, fullscreen and always-on-top, plus Dock/Taskbar badges,
+attention, progress, and flashing. Available from `crinoid/dialogs`, `crinoid/tray`, `crinoid/menu`,
+`crinoid/context-menu`, `crinoid/shortcuts`, and `crinoid/integration`.
+
+### State and persistence
+
+`createStore` with typed get/set/update/subscribe and derived selectors, persistent stores, cross-window
+state sync, user preferences, and recent-items lists (`crinoid/reactive`, `crinoid/persistent`,
+`crinoid/state-sync`, `crinoid/preferences`, `crinoid/recent-items`).
+
+### Files and streaming
+
+Read/write text and JSON, list/copy/move/remove/exists/ensure-directory, chunked streaming with progress,
+debounced path watching, path helpers, and MIME detection (`crinoid/fs`, `crinoid/stream`, `crinoid/watch`,
+`crinoid/paths`, `crinoid/mime`). Native pickers and the same operations are exposed as `window.desktop.fs`.
+
+### Networking
+
+`createApiClient` with retries, backoff, timeouts, abort, and offline short-circuiting; WebSocket and SSE
+clients with reconnect handling; a download/upload manager with progress and cancellation; and system,
+direct, fixed, or PAC proxy configuration (`crinoid/api`, `crinoid/websocket`, `crinoid/sse`,
+`crinoid/transfers`, `crinoid/proxy`).
+
+### Auth and local data
+
+Session and token managers, OAuth with PKCE, deep-link routing, SQLite via `node:sqlite`, versioned database
+migrations and repositories, TTL caches, key-value storage, IndexedDB, and versioned data export/import
+backup and restore (`crinoid/auth`, `crinoid/deep-link`, `crinoid/sqlite`, `crinoid/database`,
+`crinoid/cache`, `crinoid/storage`, `crinoid/indexeddb`, `crinoid/data-transfer`).
+
+### Tasks, updates, and observability
+
+Task context with progress and cancellation, concurrency-limited job queues, interval/cron schedulers,
+worker pools, auto-update check/download/install/rollback with release channels, crash reporting with
+secret scrubbing, metrics, tracing, and feedback reports (`crinoid/tasks`, `crinoid/crash-reporting`,
+`crinoid/metrics`, `crinoid/trace`, `crinoid/feedback`, `crinoid/observability`).
+
+### System, security, and common capabilities
+
+Clipboard (text and PNG images), native notifications, allowlisted shell operations, system info, battery
+and power events, connectivity status, OS-keychain secrets, and auto-launch. Security primitives include CSP
+construction, external-URL and permission allowlists, and sender validation (`crinoid/clipboard`,
+`crinoid/notifications`, `crinoid/shell`, `crinoid/system`, `crinoid/power`, `crinoid/network`,
+`crinoid/secrets`, `crinoid/auto-launch`, `crinoid/security`).
+
+Internationalization uses `react-intl` through `DesktopProviders`, with locale detection, RTL direction, and
+date/number/currency formatters (`crinoid/i18n`, `crinoid/react`). Versioned settings, About info, help
+links, in-app keybindings, command palette with fuzzy search, favorites, undo/redo history, and
+drag-and-drop are in `crinoid/settings`, `crinoid/about`, `crinoid/help`, `crinoid/keybindings`,
+`crinoid/command-palette`, `crinoid/search`, `crinoid/favorites`, `crinoid/history`, and `crinoid/drag-drop`.
+
+### Testing
+
+Unit fixtures, a fake IPC pair that enforces production trust and payload rules, an Electron mock, a
+collecting logger, React `TestProviders`, a `window.desktop` stub, and structural E2E helpers
+(`crinoid/testing`, `crinoid/testing/react`, `crinoid/testing/e2e`).
+
+```ts
+import { createTempDir, waitFor } from 'crinoid/testing'
+import { createDesktopApiStub, installDesktopBridge } from 'crinoid/testing/react'
+```
+
+## Security model
+
+- Renderer code has no access to Electron or Node.js; preload exposes only named capabilities.
+- Every window uses `contextIsolation: true`, `sandbox: true`, and `nodeIntegration: false`.
+- IPC channels are explicit capabilities — there is no generic `invoke()`.
+- IPC handlers validate sender origin and payload types.
+- Content Security Policy is restrictive and installed by default.
+- External URLs are limited to `https:` and `mailto:`; permission requests default to deny.
+- Secrets use OS-backed encryption (`safeStorage` / Keychain / Credential Manager).
+- Forge fuses disable RunAsNode, Node options, and CLI inspect arguments.
+
+## Documentation
+
+- [`packages/crinoid/README.md`](packages/crinoid/README.md) — copy-paste usage for every feature.
+- [`packages/crinoid/API.md`](packages/crinoid/API.md) — full public API by entry point.
+- [`packages/crinoid/CHANGELOG.md`](packages/crinoid/CHANGELOG.md) — released changes and migration notes.
+- [`.agents/skills/framework-development/SKILL.md`](.agents/skills/framework-development/SKILL.md) — agent-oriented framework guide.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/TESTING-PLAN.md`](docs/TESTING-PLAN.md), and
+  [`docs/SECURITY.md`](docs/SECURITY.md) — design and policy notes.
 
 ## Repository layout
 
-- `packages/crinoid` — the published runtime package (main, preload, renderer, and native infrastructure).
+- `packages/crinoid` — published runtime package (main, preload, renderer, and native infrastructure).
 - `packages/create-crinoid` — optional initializer and its thin project template.
-- `examples/reference-app` — package consumer used by the typechecks.
+- `examples/reference-app` — package consumer used by the typechecks and packaging CI.
 - `tests` — package unit, component, and IPC contract tests.
 
 ## Development
@@ -56,31 +211,33 @@ pnpm typecheck:reference
 pnpm format:check
 ```
 
-Run the reference consumer locally with `pnpm --filter reference-app dev`, or build its packaged app with `pnpm --filter reference-app package` (output in `examples/reference-app/out`; run on the target platform).
+Run the reference consumer with `pnpm --filter reference-app dev`, or build its packaged app with
+`pnpm --filter reference-app package` (output in `examples/reference-app/out`; run on the target platform).
 
 ## Release
 
-Package versioning and publishing are tool-driven:
+Both published packages are versioned and released in lockstep:
 
 ```bash
-pnpm release:packages           # bump patch, sync versions, promote CHANGELOG, verify, commit, tag pkg-vX.Y.Z, push
-pnpm release:packages minor     # or minor / major / an explicit version
-pnpm release:packages patch --dry-run   # preview every file change first
+pnpm release:packages                    # bump patch, verify, commit, tag pkg-vX.Y.Z, push
+pnpm release:packages minor              # or major / an explicit version
+pnpm release:packages patch --dry-run    # preview every file change first
 ```
 
-`scripts/release-packages.mjs` keeps both published packages (`crinoid` and
-`create-crinoid`) in lockstep, updates the scaffold template's dependency range, promotes the
-`## Unreleased` CHANGELOG section to the new version, runs the typechecks and tests, then commits and
-pushes the `pkg-vX.Y.Z` tag. Pushing the tag triggers `.github/workflows/publish-packages.yml`, which
-runs `scripts/publish-packages.mjs` to publish only versions that are not already on the registry.
+`scripts/release-packages.mjs` updates both package versions, the scaffold template's dependency range,
+and the `## Unreleased` CHANGELOG section, runs the typechecks and tests, then commits and pushes the
+`pkg-vX.Y.Z` tag. The tag triggers `.github/workflows/publish-packages.yml`, which publishes every
+non-private package whose version is not yet on the registry.
 
-Publishing targets the private registry `https://registry.piaosiyuan.cn/js/` configured in `.npmrc`
-(and each package's `publishConfig.registry`). CI passes it through to `scripts/publish-packages.mjs`
-on the `pkg-vX.Y.Z` tag. To publish manually against a different npm-compatible registry:
+Publishing targets <https://registry.npmjs.org/>. CI reads the `NPM_TOKEN` repository secret. To publish
+manually against a different npm-compatible registry:
 
 ```bash
 node scripts/publish-packages.mjs --registry https://npm.corp.internal/
 ```
 
-Private workspace packages are skipped automatically. Add the matching `CHANGELOG.md` entry (under
-`## Unreleased`) before running the release script.
+Add the matching `CHANGELOG.md` entry under `## Unreleased` before running the release script.
+
+## License
+
+[Apache-2.0](LICENSE). Copyright 2026 Template Maintainers.

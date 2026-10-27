@@ -65,7 +65,10 @@ describe('desktop window creation', () => {
   it('applies secure web preferences and the preload path', async () => {
     const { createDesktopWindow } = await load()
 
-    const window = (await createDesktopWindow({ preloadPath: '/app/preload.js', rendererFile: '/app/index.html' })) as unknown as MockWindow
+    const window = (await createDesktopWindow({
+      preloadPath: '/app/preload.js',
+      rendererFile: '/app/index.html'
+    })) as unknown as MockWindow
 
     expect(window.options.webPreferences).toMatchObject({
       preload: '/app/preload.js',
@@ -82,14 +85,21 @@ describe('desktop window creation', () => {
     await saveWindowState(statePath, { width: 640, height: 480, x: 10, y: 20, isMaximized: false, isFullScreen: false })
 
     const { createDesktopWindow } = await load()
-    const window = (await createDesktopWindow({ preloadPath: '/p.js', rendererFile: '/i.html', statePath })) as unknown as MockWindow
+    const window = (await createDesktopWindow({
+      preloadPath: '/p.js',
+      rendererFile: '/i.html',
+      statePath
+    })) as unknown as MockWindow
 
     expect(window.options).toMatchObject({ width: 640, height: 480, x: 10, y: 20 })
   })
 
   it('binds a child window to its parent', async () => {
     const { createDesktopWindow, createChildWindow } = await load()
-    const parent = (await createDesktopWindow({ preloadPath: '/p.js', rendererFile: '/i.html' })) as unknown as MockWindow
+    const parent = (await createDesktopWindow({
+      preloadPath: '/p.js',
+      rendererFile: '/i.html'
+    })) as unknown as MockWindow
 
     const child = createChildWindow(parent as never, {
       preloadPath: '/p.js',
@@ -103,7 +113,10 @@ describe('desktop window creation', () => {
 
   it('blocks navigation away from the app origin and denies new windows', async () => {
     const { electron, createDesktopWindow } = await load()
-    const window = (await createDesktopWindow({ preloadPath: '/p.js', rendererFile: '/i.html' })) as unknown as MockWindow
+    const window = (await createDesktopWindow({
+      preloadPath: '/p.js',
+      rendererFile: '/i.html'
+    })) as unknown as MockWindow
 
     const blocked = { preventDefault: vi.fn() }
     window.webContents.emit('will-navigate', blocked, 'https://evil.example')

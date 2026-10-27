@@ -23,7 +23,9 @@ describe('feedback report', () => {
   })
 
   it('trims the message and rejects empty feedback', () => {
-    expect(() => buildFeedbackReport({ message: '   ', appVersion: '1', platform: 'linux', arch: 'x64' })).toThrow('message')
+    expect(() => buildFeedbackReport({ message: '   ', appVersion: '1', platform: 'linux', arch: 'x64' })).toThrow(
+      'message'
+    )
   })
 
   it('validates a well-formed report', () => {

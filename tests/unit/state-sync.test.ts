@@ -6,7 +6,10 @@ type Sent = { channel: string; args: unknown[] }
 
 function createRegistry() {
   const sent: Sent[] = []
-  const windows = new Map<string, { destroyed: boolean; webContents: { send(channel: string, ...args: unknown[]): void } }>()
+  const windows = new Map<
+    string,
+    { destroyed: boolean; webContents: { send(channel: string, ...args: unknown[]): void } }
+  >()
   windows.set('main', { destroyed: false, webContents: { send: (channel, ...args) => sent.push({ channel, args }) } })
   return {
     sent,

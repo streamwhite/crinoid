@@ -65,9 +65,12 @@ describe('task context', () => {
     const context = createTaskContext({ onStatus })
 
     await expect(
-      context.run(async () => {
-        throw new Error('always')
-      }, { retries: 1, retryDelayMs: 0 })
+      context.run(
+        async () => {
+          throw new Error('always')
+        },
+        { retries: 1, retryDelayMs: 0 }
+      )
     ).rejects.toThrow('always')
 
     expect(context.status()).toBe('failed')

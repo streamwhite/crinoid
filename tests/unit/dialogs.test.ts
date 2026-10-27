@@ -54,7 +54,10 @@ describe('dialog service', () => {
     const options = { message: 'Delete?', confirmLabel: 'Delete', cancelLabel: 'Keep' }
 
     await expect(createDialogService({ dialog: port }).confirm(options)).resolves.toBe(true)
-    expect(port.showMessageBox).toHaveBeenCalledWith(undefined, expect.objectContaining({ buttons: ['Delete', 'Keep'], message: 'Delete?' }))
+    expect(port.showMessageBox).toHaveBeenCalledWith(
+      undefined,
+      expect.objectContaining({ buttons: ['Delete', 'Keep'], message: 'Delete?' })
+    )
 
     const denied = createPort({ showMessageBox: vi.fn().mockResolvedValue({ response: 1 }) })
     await expect(createDialogService({ dialog: denied }).confirm(options)).resolves.toBe(false)

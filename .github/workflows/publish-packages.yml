@@ -1,7 +1,7 @@
 name: Publish packages
 
 # Plain publish, same as any npm library: bump the version in the package's
-# package.json, commit, tag, push. Publishes to the crinoid private registry by
+# package.json, commit, tag, push. Publishes to the public npm registry by
 # default; pass the `registry` input to override it.
 on:
   push:
@@ -11,7 +11,7 @@ on:
       registry:
         description: npm-compatible registry URL
         required: false
-        default: https://registry.piaosiyuan.cn/js/
+        default: https://registry.npmjs.org/
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-          registry-url: ${{ inputs.registry || 'https://registry.piaosiyuan.cn/js/' }}
+          registry-url: ${{ inputs.registry || 'https://registry.npmjs.org/' }}
       - name: Install dependencies
         env:
           PNPM_CONFIG_BLOCK_EXOTIC_SUBDEPS: false
@@ -43,4 +43,4 @@ jobs:
       - name: Publish changed packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: node scripts/publish-packages.mjs --registry "${{ inputs.registry || 'https://registry.piaosiyuan.cn/js/' }}"
+        run: node scripts/publish-packages.mjs --registry "${{ inputs.registry || 'https://registry.npmjs.org/' }}"

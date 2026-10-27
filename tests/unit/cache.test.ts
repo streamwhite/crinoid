@@ -33,9 +33,12 @@ describe('local cache', () => {
   it('deduplicates concurrent loads for the same key', async () => {
     const cache = createCache<string>({ ttlMs: 1_000, now: () => 0 })
     let resolve: ((value: string) => void) | undefined
-    const loader = vi.fn(() => new Promise<string>((r) => {
-      resolve = r
-    }))
+    const loader = vi.fn(
+      () =>
+        new Promise<string>((r) => {
+          resolve = r
+        })
+    )
 
     const first = cache.get('key', loader)
     const second = cache.get('key', loader)

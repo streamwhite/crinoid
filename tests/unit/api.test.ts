@@ -44,10 +44,16 @@ describe('api client', () => {
   it('aborts after the timeout', async () => {
     vi.useFakeTimers()
     try {
-      const fetcher = vi.fn((_url: URL, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
-        init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
-      }))
-      const client = createApiClient('https://api.example', fetcher as unknown as typeof fetch, { timeoutMs: 50, retries: 0 })
+      const fetcher = vi.fn(
+        (_url: URL, init?: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+          })
+      )
+      const client = createApiClient('https://api.example', fetcher as unknown as typeof fetch, {
+        timeoutMs: 50,
+        retries: 0
+      })
 
       const promise = client.request('/slow')
       const assertion = expect(promise).rejects.toThrow('timed out')

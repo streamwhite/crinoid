@@ -14,9 +14,7 @@ describe('tracer', () => {
     })
 
     expect(result).toBe('value')
-    expect(onSpan).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'ipc:call', durationMs: 12, status: 'ok' })
-    )
+    expect(onSpan).toHaveBeenCalledWith(expect.objectContaining({ name: 'ipc:call', durationMs: 12, status: 'ok' }))
   })
 
   it('marks failed spans and rethrows', async () => {
@@ -34,10 +32,13 @@ describe('tracer', () => {
 
   it('propagates parent spans and trace ids', async () => {
     const spans: Array<{ name: string; parentId: string | null; traceId: string }> = []
-    const tracer = createTracer({ id: (() => {
-      let counter = 0
-      return () => `id-${++counter}`
-    })(), onSpan: (span) => spans.push(span) })
+    const tracer = createTracer({
+      id: (() => {
+        let counter = 0
+        return () => `id-${++counter}`
+      })(),
+      onSpan: (span) => spans.push(span)
+    })
 
     await tracer.trace('parent', async () => {
       await tracer.trace('child', async () => 'nested')

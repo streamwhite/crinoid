@@ -51,9 +51,11 @@ describe('data transfer', () => {
     const transfer = createDataTransfer({ storage: kv, namespace: 'ns', version: 1 })
     const written: string[] = []
 
-    await transfer.backup({ write: async (contents) => {
-      written.push(contents)
-    } })
+    await transfer.backup({
+      write: async (contents) => {
+        written.push(contents)
+      }
+    })
     await kv.remove('theme')
     const restored = await transfer.restore({ read: async () => written[0] ?? '' })
 

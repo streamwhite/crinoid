@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createDropController, hasDroppedFiles, readDroppedItems, readDroppedText } from 'crinoid/drag-drop'
-import { createKeybindingRegistry, formatKeybinding, matchesKeybinding, parseKeybinding, platformName } from 'crinoid/keybindings'
+import {
+  createKeybindingRegistry,
+  formatKeybinding,
+  matchesKeybinding,
+  parseKeybinding,
+  platformName
+} from 'crinoid/keybindings'
 
 describe('keybindings', () => {
   it('resolves CmdOrCtrl per platform', () => {
@@ -61,9 +67,8 @@ describe('drag and drop', () => {
     const received: string[] = []
 
     controller.onDragOver({ preventDefault, dataTransfer: null })
-    const items = controller.onDrop(
-      { preventDefault, dataTransfer: { files: [{ name: 'a.txt' }] } },
-      (dropped) => received.push(...dropped.map((item) => item.name))
+    const items = controller.onDrop({ preventDefault, dataTransfer: { files: [{ name: 'a.txt' }] } }, (dropped) =>
+      received.push(...dropped.map((item) => item.name))
     )
 
     expect(preventDefault).toHaveBeenCalledTimes(2)

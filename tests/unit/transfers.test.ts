@@ -44,7 +44,9 @@ describe('transfer manager', () => {
     item.emit('updated')
 
     expect(session.downloadURL).toHaveBeenCalledWith('https://example.com/file.bin')
-    expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ receivedBytes: 40, totalBytes: 100, progress: 0.4 }))
+    expect(onProgress).toHaveBeenCalledWith(
+      expect.objectContaining({ receivedBytes: 40, totalBytes: 100, progress: 0.4 })
+    )
   })
 
   it('reports completion', () => {
@@ -69,7 +71,9 @@ describe('transfer manager', () => {
     upload.start()
     upload.progress(30, 60)
 
-    expect(onProgress).toHaveBeenCalledWith(expect.objectContaining({ direction: 'upload', receivedBytes: 30, totalBytes: 60 }))
+    expect(onProgress).toHaveBeenCalledWith(
+      expect.objectContaining({ direction: 'upload', receivedBytes: 30, totalBytes: 60 })
+    )
   })
 
   it('cancels tracked transfers', () => {

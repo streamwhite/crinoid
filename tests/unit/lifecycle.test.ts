@@ -13,7 +13,10 @@ function createFakeApp() {
       return this
     },
     off(event: string, listener: Listener) {
-      listeners.set(event, (listeners.get(event) ?? []).filter((item) => item !== listener))
+      listeners.set(
+        event,
+        (listeners.get(event) ?? []).filter((item) => item !== listener)
+      )
       return this
     },
     emit(event: string, ...args: unknown[]) {

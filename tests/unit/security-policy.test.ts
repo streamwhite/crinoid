@@ -24,10 +24,15 @@ describe('content security policy', () => {
     installContentSecurityPolicy(session, { apiOrigins: [] })
 
     expect(onHeadersReceived).toHaveBeenCalledWith(expect.any(Function))
-    const listener = onHeadersReceived.mock.calls[0]?.[0] as (details: unknown, callback: (response: unknown) => void) => void
+    const listener = onHeadersReceived.mock.calls[0]?.[0] as (
+      details: unknown,
+      callback: (response: unknown) => void
+    ) => void
     const callback = vi.fn()
     listener({ responseHeaders: {} }, callback)
-    expect(callback).toHaveBeenCalledWith({ responseHeaders: expect.objectContaining({ 'Content-Security-Policy': [expect.any(String)] }) })
+    expect(callback).toHaveBeenCalledWith({
+      responseHeaders: expect.objectContaining({ 'Content-Security-Policy': [expect.any(String)] })
+    })
   })
 })
 
@@ -47,15 +52,22 @@ describe('ipc authorization', () => {
   it('rejects untrusted senders at the registry boundary', async () => {
     const handlers = new Map<string, (event: { sender: { getURL(): string } }, ...args: unknown[]) => unknown>()
     const ipcMain = {
-      handle: (channel: string, listener: (event: { sender: { getURL(): string } }, ...args: unknown[]) => unknown) => handlers.set(channel, listener),
+      handle: (channel: string, listener: (event: { sender: { getURL(): string } }, ...args: unknown[]) => unknown) =>
+        handlers.set(channel, listener),
       removeHandler: (channel: string) => handlers.delete(channel)
     }
     const registry = createIpcRegistry(ipcMain, { origin: 'file:' })
     registry.register<{ id: string }, string>({
-      channel: { name: 'secure.op', validate: (value): value is { id: string } => typeof (value as { id?: unknown })?.id === 'string', respond: (value) => value },
+      channel: {
+        name: 'secure.op',
+        validate: (value): value is { id: string } => typeof (value as { id?: unknown })?.id === 'string',
+        respond: (value) => value
+      },
       handle: () => 'ok'
     })
 
-    await expect(handlers.get('secure.op')!({ sender: { getURL: () => 'https://evil.example' } }, { id: '1' })).rejects.toThrow('Untrusted')
+    await expect(
+      handlers.get('secure.op')!({ sender: { getURL: () => 'https://evil.example' } }, { id: '1' })
+    ).rejects.toThrow('Untrusted')
   })
 })

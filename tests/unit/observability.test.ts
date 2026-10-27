@@ -42,7 +42,11 @@ describe('observability composition', () => {
     const observability = createObservability({ ...BASE, logger: silentLogger() })
 
     await observability.tracer.trace('ipc:ping', async () => 'pong')
-    await expect(observability.tracer.trace('task:fail', async () => { throw new Error('nope') })).rejects.toThrow('nope')
+    await expect(
+      observability.tracer.trace('task:fail', async () => {
+        throw new Error('nope')
+      })
+    ).rejects.toThrow('nope')
 
     expect(observability.metrics.summary('trace.duration').count).toBe(2)
     expect(observability.metrics.counter('trace.errors')).toBe(1)

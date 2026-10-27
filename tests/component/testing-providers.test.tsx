@@ -2,11 +2,7 @@
 import { render, screen } from '@testing-library/react'
 import { useIntl } from 'react-intl'
 import { describe, expect, it } from 'vitest'
-import {
-  createDesktopApiStub,
-  installDesktopBridge,
-  TestProviders
-} from 'crinoid/testing/react'
+import { createDesktopApiStub, installDesktopBridge, TestProviders } from 'crinoid/testing/react'
 
 function Probe() {
   const intl = useIntl()

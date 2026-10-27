@@ -28,7 +28,9 @@ describe('context menu handler', () => {
     const handle = { popup: vi.fn((options: { callback?: () => void }) => options.callback?.()) }
     const menu = { buildFromTemplate: vi.fn(() => handle) }
 
-    await expect(createContextMenuHandler({ menu })({ items: [{ id: 'copy', label: 'Copy' }], x: 0, y: 0 })).resolves.toBeNull()
+    await expect(
+      createContextMenuHandler({ menu })({ items: [{ id: 'copy', label: 'Copy' }], x: 0, y: 0 })
+    ).resolves.toBeNull()
   })
 })
 

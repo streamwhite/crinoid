@@ -50,7 +50,14 @@ describe('tray controller', () => {
   it('configures the tray and shows the window on click', () => {
     const tray = createTray()
     const window = createWindow()
-    const controller = createTrayController({ tray, window, menu: createMenu(), labels, tooltip: 'App', onQuit: () => {} })
+    const controller = createTrayController({
+      tray,
+      window,
+      menu: createMenu(),
+      labels,
+      tooltip: 'App',
+      onQuit: () => {}
+    })
 
     expect(tray.setToolTip).toHaveBeenCalledWith('App')
     expect(tray.setContextMenu).toHaveBeenCalled()

@@ -57,7 +57,10 @@ describe('session manager', () => {
 
   it('restores a persisted session on startup', async () => {
     const { storage, values } = createStorage()
-    values.set('session', { user: { id: '2', name: 'Lin' }, tokens: { accessToken: 'x', refreshToken: 'y', expiresAt: 9_999 } })
+    values.set('session', {
+      user: { id: '2', name: 'Lin' },
+      tokens: { accessToken: 'x', refreshToken: 'y', expiresAt: 9_999 }
+    })
 
     const manager = createSessionManager<User>({ storage, authenticate: async () => null })
     const restored = await manager.restore()
@@ -68,7 +71,10 @@ describe('session manager', () => {
 
   it('discards a persisted session that fails validation', async () => {
     const { storage, values } = createStorage()
-    values.set('session', { user: { id: '2', name: 'Lin' }, tokens: { accessToken: 'x', refreshToken: 'y', expiresAt: 9_999 } })
+    values.set('session', {
+      user: { id: '2', name: 'Lin' },
+      tokens: { accessToken: 'x', refreshToken: 'y', expiresAt: 9_999 }
+    })
 
     const manager = createSessionManager<User>({
       storage,

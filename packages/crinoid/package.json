@@ -2,8 +2,27 @@
   "name": "crinoid",
   "version": "0.1.0",
   "description": "Reusable Electron main/preload/renderer infrastructure as a normal package.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": "Template Maintainers",
+  "homepage": "https://github.com/streamwhite/desktop-dev-template-electron/tree/main/packages/crinoid#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/streamwhite/desktop-dev-template-electron.git",
+    "directory": "packages/crinoid"
+  },
+  "bugs": {
+    "url": "https://github.com/streamwhite/desktop-dev-template-electron/issues"
+  },
+  "keywords": [
+    "electron",
+    "react",
+    "vite",
+    "typescript",
+    "desktop",
+    "ipc",
+    "framework",
+    "scaffold"
+  ],
   "type": "module",
   "files": [
     "src",
@@ -316,7 +335,6 @@
     "node": ">=20"
   },
   "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.piaosiyuan.cn/js/"
+    "access": "public"
   }
 }

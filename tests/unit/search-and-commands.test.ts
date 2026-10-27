@@ -14,12 +14,7 @@ describe('fuzzy search', () => {
   })
 
   it('ranks matching items and honors the limit', () => {
-    const items = [
-      { title: 'Save File' },
-      { title: 'Open File' },
-      { title: 'Open Folder' },
-      { title: 'Quit' }
-    ]
+    const items = [{ title: 'Save File' }, { title: 'Open File' }, { title: 'Open Folder' }, { title: 'Quit' }]
 
     expect(rankBy(items, 'open', { keys: ['title'] }).map((item) => item.title)).toEqual(['Open File', 'Open Folder'])
     expect(rankBy(items, 'o', { keys: ['title'], limit: 2 })).toHaveLength(2)

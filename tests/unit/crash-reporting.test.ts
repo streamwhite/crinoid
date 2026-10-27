@@ -65,9 +65,12 @@ describe('crash reporter', () => {
   })
 
   it('swallows sink failures', async () => {
-    const options = { ...createOptions(), onCrash: vi.fn(async () => {
-      throw new Error('sink down')
-    }) }
+    const options = {
+      ...createOptions(),
+      onCrash: vi.fn(async () => {
+        throw new Error('sink down')
+      })
+    }
     const reporter = createCrashReporter(options)
 
     await expect(reporter.report(new Error('boom'))).resolves.toBeUndefined()

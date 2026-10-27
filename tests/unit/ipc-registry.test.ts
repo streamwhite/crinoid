@@ -1,10 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import {
-  DESKTOP_CHANNELS,
-  createChannel,
-  createIpcInvoker,
-  createIpcRegistry
-} from 'crinoid/ipc'
+import { DESKTOP_CHANNELS, createChannel, createIpcInvoker, createIpcRegistry } from 'crinoid/ipc'
 import { createMetrics } from 'crinoid/metrics'
 import { createTracer } from 'crinoid/trace'
 

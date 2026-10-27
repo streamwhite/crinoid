@@ -1,11 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import {
-  createConsoleSink,
-  createLogger,
-  createMultiSink,
-  levelFromEnvironment,
-  type LogRecord
-} from 'crinoid/logging'
+import { createConsoleSink, createLogger, createMultiSink, levelFromEnvironment, type LogRecord } from 'crinoid/logging'
 
 const FIXED_TIME = '2020-01-01T00:00:00.000Z'
 

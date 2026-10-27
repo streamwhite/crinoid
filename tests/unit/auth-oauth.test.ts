@@ -54,7 +54,10 @@ describe('oauth client', () => {
     })
 
     const request = await client.createAuthorizationRequest()
-    const tokens = await client.completeAuthorization('myapp://auth/callback?code=abc&state=' + request.state, request.verifier)
+    const tokens = await client.completeAuthorization(
+      'myapp://auth/callback?code=abc&state=' + request.state,
+      request.verifier
+    )
 
     expect(exchange).toHaveBeenCalledWith(expect.objectContaining({ code: 'abc', codeVerifier: request.verifier }))
     expect(tokens?.accessToken).toBe('a')
@@ -70,6 +73,8 @@ describe('oauth client', () => {
     })
 
     const request = await client.createAuthorizationRequest()
-    await expect(client.completeAuthorization('myapp://auth/callback?code=abc&state=wrong', request.verifier)).rejects.toThrow('state')
+    await expect(
+      client.completeAuthorization('myapp://auth/callback?code=abc&state=wrong', request.verifier)
+    ).rejects.toThrow('state')
   })
 })
