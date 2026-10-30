@@ -78,17 +78,27 @@ createRoot(document.getElementById('root')!).render(
 The renderer reaches the operating system only through the typed `window.desktop` bridge. Import the
 `DesktopAPI` type from `crinoid/ipc` into `vite-env.d.ts` to type it globally.
 
-## Coding agent skill
+## Coding agent skills
 
-Crinoid ships a skill that teaches coding agents the process boundary, golden rules, `createMainProcess`
-options, every capability subpath, the renderer bridge, testing policy, and build/release workflow:
+Crinoid ships focused agent skills, split by functional module so agents load only what a task needs:
 
 ```bash
 npx skills add streamwhite/desktop-dev-template-electron -g
 ```
 
-The skill lives in [`.agents/skills/framework-development/SKILL.md`](.agents/skills/framework-development/SKILL.md)
-and is discovered by `npx skills` as well as agents that read `.agents/skills/` directly.
+| Skill | Scope |
+| --- | --- |
+| [`crinoid-setup`](.agents/skills/crinoid-setup/SKILL.md) | scaffold, entry files, Forge/Vite, build and release |
+| [`crinoid-main-process`](.agents/skills/crinoid-main-process/SKILL.md) | `createMainProcess`, windows, tray, menus, shortcuts, lifecycle |
+| [`crinoid-renderer`](.agents/skills/crinoid-renderer/SKILL.md) | preload bridge, `window.desktop`, typed IPC, React, i18n |
+| [`crinoid-data`](.agents/skills/crinoid-data/SKILL.md) | state, preferences, files, storage, SQLite, import/export |
+| [`crinoid-services`](.agents/skills/crinoid-services/SKILL.md) | HTTP, WebSocket, SSE, auth, tasks, updates |
+| [`crinoid-system`](.agents/skills/crinoid-system/SKILL.md) | clipboard, shell, power, secrets, security, observability |
+| [`crinoid-app-features`](.agents/skills/crinoid-app-features/SKILL.md) | settings, about, help, keybindings, command palette, search, history |
+| [`crinoid-testing`](.agents/skills/crinoid-testing/SKILL.md) | unit/component/IPC/main/E2E testing and test policy |
+
+Each skill is discovered by `npx skills` as well as agents that read `.agents/skills/` directly. The
+`crinoid-setup` skill includes a routing table to the other modules.
 
 ## What is included
 
@@ -189,7 +199,7 @@ import { createDesktopApiStub, installDesktopBridge } from 'crinoid/testing/reac
 - [`packages/crinoid/README.md`](packages/crinoid/README.md) — copy-paste usage for every feature.
 - [`packages/crinoid/API.md`](packages/crinoid/API.md) — full public API by entry point.
 - [`packages/crinoid/CHANGELOG.md`](packages/crinoid/CHANGELOG.md) — released changes and migration notes.
-- [`.agents/skills/framework-development/SKILL.md`](.agents/skills/framework-development/SKILL.md) — agent-oriented framework guide.
+- [`.agents/skills/`](.agents/skills/) — focused agent skills for setup, main process, renderer, data, services, system, app features, and testing.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/TESTING-PLAN.md`](docs/TESTING-PLAN.md), and
   [`docs/SECURITY.md`](docs/SECURITY.md) — design and policy notes.
 
