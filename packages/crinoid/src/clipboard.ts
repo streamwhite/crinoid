@@ -1,6 +1,8 @@
 export interface ClipboardPort {
   readText(): Promise<string>
   writeText(text: string): Promise<void>
+  readHtml(): Promise<string>
+  writeHtml(html: string): Promise<void>
   readImage(): Promise<Uint8Array>
   writeImage(png: Uint8Array): Promise<void>
   has(mimeType: string): Promise<boolean>
@@ -10,6 +12,8 @@ export interface ClipboardPort {
 export interface ClipboardService {
   readText(): Promise<string>
   writeText(value: string): Promise<void>
+  readHtml(): Promise<string>
+  writeHtml(html: string): Promise<void>
   readImage(): Promise<Uint8Array>
   writeImage(png: Uint8Array): Promise<void>
   hasImage(): Promise<boolean>
@@ -24,6 +28,8 @@ export function createClipboardService(clipboard: ClipboardPort): ClipboardServi
   return {
     readText: () => clipboard.readText(),
     writeText: (value) => clipboard.writeText(value),
+    readHtml: () => clipboard.readHtml(),
+    writeHtml: (value) => clipboard.writeHtml(value),
     readImage: () => clipboard.readImage(),
     writeImage: (png) => clipboard.writeImage(png),
     hasImage: () => clipboard.has(IMAGE_MIME_TYPE),

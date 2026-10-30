@@ -32,9 +32,7 @@ export interface OpenDialogOptions {
 
 export interface SaveDialogOptions extends OpenDialogOptions {}
 
-export interface SaveDialogRequest {
-  readonly defaultPath?: string
-}
+export type SaveDialogRequest = SaveDialogOptions
 
 export interface ConfirmDialogOptions {
   readonly message: string
@@ -46,9 +44,18 @@ export interface ConfirmDialogOptions {
 
 const CONFIRM_TYPES = ['none', 'info', 'error', 'question', 'warning'] as const
 
-export function isSaveDialogRequest(value: unknown): value is SaveDialogRequest {
+export function isOpenDialogOptions(value: unknown): value is OpenDialogOptions {
   if (!isRecord(value)) return false
-  return value.defaultPath === undefined || typeof value.defaultPath === 'string'
+  return (
+    isOptionalString(value.title) &&
+    isOptionalString(value.defaultPath) &&
+    isOptionalString(value.buttonLabel) &&
+    (value.filters === undefined || isFileFilters(value.filters))
+  )
+}
+
+export function isSaveDialogRequest(value: unknown): value is SaveDialogRequest {
+  return isOpenDialogOptions(value)
 }
 
 export function isConfirmDialogOptions(value: unknown): value is ConfirmDialogOptions {
@@ -65,6 +72,23 @@ export function isConfirmDialogOptions(value: unknown): value is ConfirmDialogOp
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
+}
+
+function isOptionalString(value: unknown): boolean {
+  return value === undefined || typeof value === 'string'
+}
+
+function isFileFilters(value: unknown): value is readonly FileFilter[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (filter) =>
+        isRecord(filter) &&
+        typeof filter.name === 'string' &&
+        Array.isArray(filter.extensions) &&
+        filter.extensions.every((extension) => typeof extension === 'string')
+    )
+  )
 }
 
 export interface DialogService {

@@ -18,7 +18,7 @@ vi.mock('electron', () => ({
   ipcRenderer: {
     invoke: async (channel: string, ...args: unknown[]) => {
       bridge.invoked.push({ channel, args })
-      return `invoked:${channel}`
+      return channel === 'fs.watch-start' ? 'watch-1' : `invoked:${channel}`
     },
     send: (channel: string, ...args: unknown[]) => {
       bridge.sent.push({ channel, args })
@@ -38,6 +38,8 @@ vi.mock('electron', () => ({
 import { exposeDesktopApi } from 'crinoid/preload'
 
 function desktop(): DesktopAPI {
+  bridge.invoked.length = 0
+  bridge.sent.length = 0
   exposeDesktopApi()
   if (!bridge.exposed) throw new Error('desktop bridge was not exposed')
   expect(bridge.exposed.key).toBe('desktop')
@@ -98,6 +100,56 @@ describe('exposeDesktopApi', () => {
       { channel: 'window.set-always-on-top', args: [true] },
       { channel: 'app.set-badge', args: [4] }
     ])
+  })
+
+  it('forwards dialog presentation options', async () => {
+    const api = desktop()
+    const filters = [{ name: 'Text', extensions: ['txt'] }]
+
+    await api.dialog.openFile({ title: 'Open', filters })
+    await api.dialog.saveFile({ defaultPath: '/tmp/out.txt', filters })
+
+    expect(bridge.invoked[0]).toEqual({ channel: 'dialog.open-file', args: [{ title: 'Open', filters }] })
+    expect(bridge.invoked[1]).toEqual({
+      channel: 'dialog.save-file',
+      args: [{ defaultPath: '/tmp/out.txt', filters }]
+    })
+  })
+
+  it('starts file watches, filters events by id, and stops them', async () => {
+    const api = desktop()
+    const events: unknown[] = []
+
+    const stop = await api.fs.watch('/tmp', (event) => events.push(event))
+    expect(bridge.invoked[0]).toEqual({ channel: 'fs.watch-start', args: [{ path: '/tmp' }] })
+
+    const handlers = bridge.rendererListeners.get('fs.watch-event')
+    for (const handler of handlers ?? []) {
+      handler({}, { id: 'watch-1', type: 'change', fileName: 'a.txt' })
+      handler({}, { id: 'other', type: 'change', fileName: 'b.txt' })
+    }
+    expect(events).toHaveLength(1)
+    expect(events[0]).toMatchObject({ type: 'change', fileName: 'a.txt' })
+
+    stop()
+    expect(handlers?.size).toBe(0)
+    expect(bridge.invoked.at(-1)).toEqual({ channel: 'fs.watch-stop', args: [{ id: 'watch-1' }] })
+  })
+
+  it('exposes power lock and unlock events', () => {
+    const api = desktop()
+    const events: string[] = []
+
+    const offLock = api.power.onLock(() => events.push('lock'))
+    const offUnlock = api.power.onUnlock(() => events.push('unlock'))
+    for (const handler of bridge.rendererListeners.get('power.lock') ?? []) handler({})
+    for (const handler of bridge.rendererListeners.get('power.unlock') ?? []) handler({})
+    expect(events).toEqual(['lock', 'unlock'])
+
+    offLock()
+    offUnlock()
+    expect(bridge.rendererListeners.get('power.lock')?.size).toBe(0)
+    expect(bridge.rendererListeners.get('power.unlock')?.size).toBe(0)
   })
 
   it('subscribes and unsubscribes renderer event listeners', () => {

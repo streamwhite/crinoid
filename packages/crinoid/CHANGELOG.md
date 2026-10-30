@@ -4,6 +4,9 @@
 
 ### Added
 
+- `./ipc` — renderer bridge now accepts presentation options for every dialog, exposes `fs.watch` / `fs.ensureDir` and clipboard HTML read/write, forwards power lock/unlock events, and registers `preferences.*` and `updates.setChannel` handlers.
+- `./main` — `createMainProcess` accepts a `preferences` option (defaults + optional storage), persists `state` when `persistPath` is set, reports real network status, and forwards parsed deep links to the renderer.
+
 - `./environment` — `resolveEnvironment`, `environmentFromProcess`, `readEnvValue` for `development` / `test` / `production`.
 - `./lifecycle` — `createAppLifecycle` plus `createShutdownManager` and `withTimeout` for graceful shutdown.
 - `./errors` — `installGlobalErrorHandlers` and `normalizeError` for global `uncaughtException` / `unhandledRejection` reporting.

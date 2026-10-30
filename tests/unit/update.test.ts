@@ -85,6 +85,23 @@ describe('update service', () => {
     expect(progress).toEqual([0.5, 1])
   })
 
+  it('subscribes to adapter progress even without a caller listener', async () => {
+    let subscribed = false
+    const service = createUpdateService({
+      adapter: {
+        ...createAdapter(),
+        subscribeProgress: () => {
+          subscribed = true
+        }
+      },
+      currentVersion: '1.0.0'
+    })
+
+    await service.download()
+
+    expect(subscribed).toBe(true)
+  })
+
   it('installs and can roll back to the previous version', async () => {
     const installed: string[] = []
     const service = createUpdateService({
@@ -96,5 +113,35 @@ describe('update service', () => {
     service.rollback()
 
     expect(installed).toEqual(['1.1.0', '1.0.0'])
+  })
+
+  it('switches release channels and applies them to the next check', async () => {
+    const service = createUpdateService({
+      adapter: {
+        ...createAdapter(),
+        checkForUpdates: async () => ({ version: '1.1.0-beta.1' })
+      },
+      currentVersion: '1.0.0',
+      channel: resolveChannel('stable')
+    })
+
+    expect(service.channel().name).toBe('stable')
+    await expect(service.check()).resolves.toMatchObject({ available: false })
+
+    expect(service.setChannel('beta').name).toBe('beta')
+    await expect(service.check()).resolves.toMatchObject({ available: true })
+  })
+
+  it('installs the last checked version when none is supplied', async () => {
+    const installed: string[] = []
+    const service = createUpdateService({
+      adapter: { ...createAdapter(), install: (version: string) => installed.push(version) },
+      currentVersion: '1.0.0'
+    })
+
+    await service.check()
+    service.install()
+
+    expect(installed).toEqual(['1.1.0'])
   })
 })

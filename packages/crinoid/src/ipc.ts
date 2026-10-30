@@ -2,12 +2,21 @@ import { isTrustedSender } from './security.js'
 import type { Logger } from './logging.js'
 import type { Tracer } from './trace.js'
 import type { Metrics } from './metrics.js'
-import { isConfirmDialogOptions, isSaveDialogRequest, type ConfirmDialogOptions, type SaveDialogRequest } from './dialogs.js'
+import {
+  isConfirmDialogOptions,
+  isOpenDialogOptions,
+  isSaveDialogRequest,
+  type ConfirmDialogOptions,
+  type OpenDialogOptions,
+  type SaveDialogOptions
+} from './dialogs.js'
 import { isContextMenuRequest, type ContextMenuRequest } from './context-menu.js'
 import type { SystemInfo } from './system.js'
 import type { BatteryStatus } from './power.js'
 import type { NetworkStatus } from './network.js'
+import type { TransferProgress } from './transfers.js'
 import type { UpdateCheckResult } from './tasks.js'
+import type { WatchEvent } from './watch.js'
 import type { FeedbackCategory } from './feedback.js'
 
 export const IPC_CHANNELS = {
@@ -35,6 +44,7 @@ export const IPC_CHANNELS = {
   fsWriteJson: 'fs.write-json',
   fsList: 'fs.list',
   fsExists: 'fs.exists',
+  fsEnsureDir: 'fs.ensure-dir',
   fsCopy: 'fs.copy',
   fsMove: 'fs.move',
   fsRemove: 'fs.remove',
@@ -59,6 +69,8 @@ export const IPC_CHANNELS = {
   clipboardClear: 'clipboard.clear',
   clipboardHasImage: 'clipboard.has-image',
   clipboardHasHtml: 'clipboard.has-html',
+  clipboardReadHtml: 'clipboard.read-html',
+  clipboardWriteHtml: 'clipboard.write-html',
   clipboardReadImage: 'clipboard.read-image',
   clipboardWriteImage: 'clipboard.write-image',
   systemInfo: 'system.info',
@@ -124,6 +136,9 @@ const isJsonWriteRequest = (value: unknown): value is { path: string; value: unk
   isRecord(value) && typeof value.path === 'string'
 
 const isPathRequest = (value: unknown): value is { path: string } => isRecord(value) && typeof value.path === 'string'
+
+const isOptionalOpenDialogOptions = (value: unknown): value is OpenDialogOptions | undefined =>
+  value === undefined || isOpenDialogOptions(value)
 
 const isPathPairRequest = (value: unknown): value is { source: string; destination: string } =>
   isRecord(value) && typeof value.source === 'string' && typeof value.destination === 'string'
@@ -192,19 +207,32 @@ export const DESKTOP_CHANNELS = {
   setAlwaysOnTop: createChannel<boolean, void>(IPC_CHANNELS.setAlwaysOnTop, isBoolean),
   openWindow: createChannel<string, boolean>(IPC_CHANNELS.openWindow, isString),
   openExternal: createChannel<string, boolean>(IPC_CHANNELS.openExternal, isString),
-  openFile: createChannel<void, string | null>(IPC_CHANNELS.openFile, isUndefined),
-  openFiles: createChannel<void, readonly string[]>(IPC_CHANNELS.openFiles, isUndefined),
-  openDirectory: createChannel<void, string | null>(IPC_CHANNELS.openDirectory, isUndefined),
-  saveFile: createChannel<SaveDialogRequest, string | null>(IPC_CHANNELS.saveFile, isSaveDialogRequest),
+  openFile: createChannel<OpenDialogOptions | undefined, string | null>(
+    IPC_CHANNELS.openFile,
+    isOptionalOpenDialogOptions
+  ),
+  openFiles: createChannel<OpenDialogOptions | undefined, readonly string[]>(
+    IPC_CHANNELS.openFiles,
+    isOptionalOpenDialogOptions
+  ),
+  openDirectory: createChannel<OpenDialogOptions | undefined, string | null>(
+    IPC_CHANNELS.openDirectory,
+    isOptionalOpenDialogOptions
+  ),
+  saveFile: createChannel<SaveDialogOptions, string | null>(IPC_CHANNELS.saveFile, isSaveDialogRequest),
   confirm: createChannel<ConfirmDialogOptions, boolean>(IPC_CHANNELS.confirm, isConfirmDialogOptions),
-  pickFile: createChannel<void, string | null>(IPC_CHANNELS.pickFile, isUndefined),
-  pickDirectory: createChannel<void, string | null>(IPC_CHANNELS.pickDirectory, isUndefined),
+  pickFile: createChannel<OpenDialogOptions | undefined, string | null>(IPC_CHANNELS.pickFile, isOptionalOpenDialogOptions),
+  pickDirectory: createChannel<OpenDialogOptions | undefined, string | null>(
+    IPC_CHANNELS.pickDirectory,
+    isOptionalOpenDialogOptions
+  ),
   fsReadText: createChannel<{ path: string }, string>(IPC_CHANNELS.fsReadText, isPathRequest),
   fsWriteText: createChannel<{ path: string; content: string }, void>(IPC_CHANNELS.fsWriteText, isWriteRequest),
   fsReadJson: createChannel<{ path: string }, unknown>(IPC_CHANNELS.fsReadJson, isPathRequest),
   fsWriteJson: createChannel<{ path: string; value: unknown }, void>(IPC_CHANNELS.fsWriteJson, isJsonWriteRequest),
   fsList: createChannel<{ path: string }, readonly unknown[]>(IPC_CHANNELS.fsList, isPathRequest),
   fsExists: createChannel<{ path: string }, boolean>(IPC_CHANNELS.fsExists, isPathRequest),
+  fsEnsureDir: createChannel<{ path: string }, void>(IPC_CHANNELS.fsEnsureDir, isPathRequest),
   fsCopy: createChannel<{ source: string; destination: string }, void>(IPC_CHANNELS.fsCopy, isPathPairRequest),
   fsMove: createChannel<{ source: string; destination: string }, void>(IPC_CHANNELS.fsMove, isPathPairRequest),
   fsRemove: createChannel<{ path: string }, void>(IPC_CHANNELS.fsRemove, isPathRequest),
@@ -235,6 +263,8 @@ export const DESKTOP_CHANNELS = {
   clipboardClear: createChannel<void, void>(IPC_CHANNELS.clipboardClear, isUndefined),
   clipboardHasImage: createChannel<void, boolean>(IPC_CHANNELS.clipboardHasImage, isUndefined),
   clipboardHasHtml: createChannel<void, boolean>(IPC_CHANNELS.clipboardHasHtml, isUndefined),
+  clipboardReadHtml: createChannel<void, string>(IPC_CHANNELS.clipboardReadHtml, isUndefined),
+  clipboardWriteHtml: createChannel<string, void>(IPC_CHANNELS.clipboardWriteHtml, isString),
   clipboardReadImage: createChannel<void, Uint8Array>(IPC_CHANNELS.clipboardReadImage, isUndefined),
   clipboardWriteImage: createChannel<Uint8Array, void>(IPC_CHANNELS.clipboardWriteImage, isBytes),
   systemInfo: createChannel<void, unknown>(IPC_CHANNELS.systemInfo, isUndefined),
@@ -408,16 +438,18 @@ export interface DesktopAPI {
     trashItem: (path: string) => Promise<void>
   }
   dialog: {
-    openFile: () => Promise<string | null>
-    openFiles: () => Promise<readonly string[]>
-    openDirectory: () => Promise<string | null>
-    saveFile: (request?: SaveDialogRequest) => Promise<string | null>
+    openFile: (options?: OpenDialogOptions) => Promise<string | null>
+    openFiles: (options?: OpenDialogOptions) => Promise<readonly string[]>
+    openDirectory: (options?: OpenDialogOptions) => Promise<string | null>
+    saveFile: (options?: SaveDialogOptions) => Promise<string | null>
     confirm: (options: ConfirmDialogOptions) => Promise<boolean>
   }
   contextMenu: { show: (request: ContextMenuRequest) => Promise<string | null> }
   clipboard: {
     readText: () => Promise<string>
     writeText: (value: string) => Promise<void>
+    readHtml: () => Promise<string>
+    writeHtml: (html: string) => Promise<void>
     readImage: () => Promise<Uint8Array>
     writeImage: (png: Uint8Array) => Promise<void>
     hasImage: () => Promise<boolean>
@@ -432,6 +464,8 @@ export interface DesktopAPI {
     status: <T = BatteryStatus>() => Promise<T>
     onSuspend: (listener: () => void) => () => void
     onResume: (listener: () => void) => () => void
+    onLock: (listener: () => void) => () => void
+    onUnlock: (listener: () => void) => () => void
   }
   network: {
     status: <T = NetworkStatus>() => Promise<T>
@@ -440,7 +474,7 @@ export interface DesktopAPI {
   transfers: {
     download: (url: string, savePath?: string) => Promise<void>
     cancelAll: () => Promise<void>
-    onProgress: (listener: (progress: unknown) => void) => () => void
+    onProgress: (listener: (progress: TransferProgress) => void) => () => void
   }
   secrets: {
     get: (key: string) => Promise<string | null>
@@ -464,18 +498,20 @@ export interface DesktopAPI {
     onProgress: (listener: (progress: number) => void) => () => void
   }
   fs: {
-    pickFile: () => Promise<string | null>
-    pickDirectory: () => Promise<string | null>
+    pickFile: (options?: OpenDialogOptions) => Promise<string | null>
+    pickDirectory: (options?: OpenDialogOptions) => Promise<string | null>
     readText: (path: string) => Promise<string>
     writeText: (path: string, content: string) => Promise<void>
     readJson: <T>(path: string) => Promise<T>
     writeJson: (path: string, value: unknown) => Promise<void>
     list: (path: string) => Promise<readonly FileSystemEntry[]>
     exists: (path: string) => Promise<boolean>
+    ensureDir: (path: string) => Promise<void>
     copy: (source: string, destination: string) => Promise<void>
     move: (source: string, destination: string) => Promise<void>
     remove: (path: string) => Promise<void>
     mime: (path: string) => Promise<string>
+    watch: (path: string, listener: (event: WatchEvent) => void) => Promise<() => void>
     pathForFile: (file: File) => string
   }
   recentFiles: {
@@ -501,4 +537,8 @@ export interface FileSystemEntry {
   readonly path: string
   readonly isDirectory: boolean
   readonly size: number
+}
+
+export interface FileWatchEvent extends WatchEvent {
+  readonly id: string
 }

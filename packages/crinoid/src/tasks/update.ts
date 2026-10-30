@@ -1,5 +1,5 @@
-import { compareVersions, isNewerVersion, isPrerelease } from './version.js'
-import type { ReleaseChannel } from './release-channel.js'
+import { isNewerVersion, isPrerelease } from './version.js'
+import { resolveChannel, type ReleaseChannel } from './release-channel.js'
 
 export interface UpdateInfo {
   readonly version: string
@@ -30,18 +30,21 @@ export interface UpdateServiceOptions {
 export interface UpdateService {
   check(): Promise<UpdateCheckResult>
   download(onProgress?: (progress: number) => void): Promise<void>
-  install(version: string): void
+  install(version?: string): void
   rollback(): void
+  channel(): ReleaseChannel
+  setChannel(name: string): ReleaseChannel
 }
 
 export function createUpdateService(options: UpdateServiceOptions): UpdateService {
   let lastKnownVersion: string | null = null
+  let channel = options.channel ?? resolveChannel('stable')
 
   return {
     check: async () => {
       const info = await options.adapter.checkForUpdates()
       if (!info) return { available: false, version: null }
-      const allowed = options.channel?.allowPrerelease ?? false
+      const allowed = channel.allowPrerelease
       const available =
         isNewerVersion(info.version, options.currentVersion) && (allowed || !isPrerelease(info.version))
       if (available) lastKnownVersion = info.version
@@ -52,16 +55,22 @@ export function createUpdateService(options: UpdateServiceOptions): UpdateServic
       }
     },
     download: async (onProgress) => {
-      if (onProgress) options.adapter.subscribeProgress?.(onProgress)
+      options.adapter.subscribeProgress?.(onProgress ?? (() => {}))
       await options.adapter.downloadUpdate()
     },
     install: (version) => {
-      if (options.adapter.install) options.adapter.install(version)
+      const target = version ?? lastKnownVersion ?? options.currentVersion
+      if (options.adapter.install) options.adapter.install(target)
       else options.adapter.quitAndInstall()
     },
     rollback: () => {
       options.adapter.install?.(options.currentVersion)
       options.onRollback?.(options.currentVersion)
+    },
+    channel: () => channel,
+    setChannel: (name) => {
+      channel = resolveChannel(name)
+      return channel
     }
   }
 }

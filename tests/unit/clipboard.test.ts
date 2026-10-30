@@ -5,6 +5,8 @@ function createPort() {
   return {
     readText: vi.fn(async () => 'text'),
     writeText: vi.fn(async () => {}),
+    readHtml: vi.fn(async () => '<b>text</b>'),
+    writeHtml: vi.fn(async () => {}),
     readImage: vi.fn(async () => new Uint8Array([1, 2, 3])),
     writeImage: vi.fn(async () => {}),
     has: vi.fn(async () => true),
@@ -21,6 +23,16 @@ describe('clipboard service', () => {
     await clipboard.writeText('next')
 
     expect(port.writeText).toHaveBeenCalledWith('next')
+  })
+
+  it('reads and writes HTML', async () => {
+    const port = createPort()
+    const clipboard = createClipboardService(port)
+
+    await expect(clipboard.readHtml()).resolves.toBe('<b>text</b>')
+    await clipboard.writeHtml('<i>next</i>')
+
+    expect(port.writeHtml).toHaveBeenCalledWith('<i>next</i>')
   })
 
   it('reads and writes images', async () => {

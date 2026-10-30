@@ -50,7 +50,7 @@
 | `.../fs` | file read/write/list/copy/move/remove |
 | `.../stream` | `readTextStream`, `writeTextStream` |
 | `.../watch` | `watchPath`, `createNodeWatcher` |
-| `.../clipboard` | `createClipboardService` (text + PNG image) |
+| `.../clipboard` | `createClipboardService` (text, HTML, PNG image) |
 | `.../notifications` | `createNotificationService` |
 | `.../shell` | `createShellService` |
 | `.../system` | `collectSystemInfo`, `formatBytes` |
@@ -93,7 +93,7 @@
 
 - **Main and child windows** — `createMainProcess` opens `window` (main) plus `windows[]`; `childWindows` defines named dialogs opened through `DesktopAPI.window.open(id)`. `createChildWindow(parent, options)` is available directly.
 - **State persistence** — `createDesktopWindow` restores size, position, maximized, and fullscreen state. `ensureVisibleOnDisplays` drops off-screen coordinates so a window re-centers when a monitor is removed.
-- **Dialogs** — `createDialogService` wraps open-file, open-files, open-directory, save-file, and a two-button confirm. Payloads cross IPC through `isSaveDialogRequest` / `isConfirmDialogOptions`.
+- **Dialogs** — `createDialogService` wraps open-file, open-files, open-directory, save-file, and a two-button confirm. Every open/save dialog accepts `title`, `defaultPath`, `buttonLabel`, and `filters`. Payloads cross IPC through `isOpenDialogOptions` / `isSaveDialogRequest` / `isConfirmDialogOptions`.
 - **Tray** — `createTrayController` builds the tray menu, wires click-to-show, and optionally hides the window on minimize or close.
 - **Menus** — `createMenuService` installs an application menu (role-based by default, no hardcoded labels) and pops up context menus.
 - **Context menu** — `createContextMenuHandler` turns a validated renderer request into a native menu and resolves the selected item id.
@@ -107,7 +107,7 @@
 - **Reactive state** — subscribers receive `(value, previous)`; selectors only notify when the derived value changes.
 - **Persistent store** — `createPersistentStore` loads from a `Storage`, merges with defaults, and writes back on change.
 - **Cross-window sync** — `createStateSync` broadcasts a store to every window and can emit the initial state to a specific window. `createMainProcess` wires this when `state` is provided.
-- **Preferences** — `createPreferences` wraps a persistent store with per-key `get`/`set`, `reset`, and change events.
+- **Preferences** — `createPreferences` wraps a persistent store with per-key `get`/`set`, `reset`, and change events. `createMainProcess` accepts a `preferences` option (`defaults`, optional `key`, optional `storage`) and exposes it as `desktop.preferences`.
 - **Recent files / projects** — `createRecentItems` keeps an ordered, de-duplicated, capped list with `add`/`remove`/`clear`.
 
 ```ts
@@ -115,6 +115,7 @@ createMainProcess({
   config,
   window,
   state: { initial: { theme: 'light' }, persistPath: join(app.getPath('userData'), 'state.json') },
+  preferences: { defaults: { locale: 'en', zoom: 1 } },
   recentFiles: { limit: 10 }
 })
 ```
@@ -124,18 +125,18 @@ createMainProcess({
 - **Pickers** — `desktop.fs.pickFile()` / `desktop.fs.pickDirectory()` wrap the native open dialogs (the dialog section also exposes `openFiles` and `saveFile`).
 - **Read / write** — `readText`, `writeText`, `readJson`, `writeJson`, `listDirectory`, `copyPath`, `movePath`, `removePath`, `fileExists`, `ensureDirectory`.
 - **Streaming** — `readTextStream` and `writeTextStream` process chunked data and report byte progress.
-- **Watching** — `watchPath` debounces `fs.watch` events; the renderer can start a watch and receive changes through the bridge.
+- **Watching** — `watchPath` debounces `fs.watch` events; `desktop.fs.watch(path, listener)` starts a renderer-scoped watch and returns a stop function.
 - **Paths** — `joinPath`, `normalizePath`, `relativePath`, `ensureExtension`, `isSubPath`, `uniquePath`.
 - **MIME** — `detectMimeType`, `getFileCategory`, `isTextMimeType`.
 - **Recent files** — recorded through `createRecentItems` and surfaced as `desktop.recentFiles`.
 
 ## System capabilities
 
-- **Clipboard** — `createClipboardService` reads/writes text and PNG images (`readImage`/`writeImage` as `Uint8Array`) and checks for image/HTML content; exposed as `desktop.clipboard`.
+- **Clipboard** — `createClipboardService` reads/writes text, HTML, and PNG images (`readImage`/`writeImage` as `Uint8Array`) and checks for image/HTML content; exposed as `desktop.clipboard`.
 - **Native notifications** — `createNotificationService` shows notifications with click/close handlers when supported; exposed as `desktop.notifications.show`.
 - **Shell** — `createShellService` opens external URLs (allowlisted), opens paths, reveals items, and moves files to trash; exposed as `desktop.shell`.
 - **System info** — `collectSystemInfo` reports OS/platform/arch/release/hostname, CPU model and cores, memory totals, and app facts; exposed as `desktop.system.info`.
-- **Battery** — `readBatteryStatus` reports charging state; `createPowerMonitor` forwards suspend/resume/lock/unlock; exposed as `desktop.power.status`.
+- **Battery** — `readBatteryStatus` reports charging state; `createPowerMonitor` forwards suspend/resume/lock/unlock; exposed as `desktop.power.status` plus `onSuspend`/`onResume`/`onLock`/`onUnlock`.
 - **Network** — `readNetworkStatus` and `createNetworkMonitor` report connectivity; exposed as `desktop.network.status`.
 - **Secrets** — `createSecretStore` encrypts values through the OS keychain (`safeStorage`); exposed as `desktop.secrets`.
 
@@ -252,7 +253,7 @@ createMainProcess({
 - **System tray** — `createTrayController` (see window and interface capabilities).
 - **Notifications** — `createNotificationService` (see system capabilities).
 - **Global shortcuts** — `createShortcutManager` for global accelerators plus `createKeybindingRegistry` for in-app bindings.
-- **Clipboard image** — `desktop.clipboard.readImage()` / `writeImage(png)` move PNG bytes across IPC.
+- **Clipboard image / HTML** — `desktop.clipboard.readImage()` / `writeImage(png)` move PNG bytes across IPC; `desktop.clipboard.readHtml()` / `writeHtml(html)` cover rich text.
 
 ## Stability rules
 

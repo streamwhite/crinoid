@@ -1,5 +1,13 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron'
-import { DESKTOP_CHANNELS, createIpcInvoker, type DesktopAPI, type FileSystemEntry } from './ipc.js'
+import {
+  DESKTOP_CHANNELS,
+  createIpcInvoker,
+  type DesktopAPI,
+  type FileSystemEntry,
+  type FileWatchEvent
+} from './ipc.js'
+import type { WatchEvent } from './watch.js'
+import type { TransferProgress } from './transfers.js'
 
 export function exposeDesktopApi(): void {
   const call = <I, O>(channel: Parameters<typeof createIpcInvoker<I, O>>[0]) => createIpcInvoker<I, O>(channel, ipcRenderer)
@@ -48,6 +56,8 @@ export function exposeDesktopApi(): void {
     clipboard: {
       readText: call(DESKTOP_CHANNELS.readClipboard),
       writeText: call(DESKTOP_CHANNELS.writeClipboard),
+      readHtml: call(DESKTOP_CHANNELS.clipboardReadHtml),
+      writeHtml: call(DESKTOP_CHANNELS.clipboardWriteHtml),
       readImage: call(DESKTOP_CHANNELS.clipboardReadImage),
       writeImage: call(DESKTOP_CHANNELS.clipboardWriteImage),
       hasImage: call(DESKTOP_CHANNELS.clipboardHasImage),
@@ -61,7 +71,9 @@ export function exposeDesktopApi(): void {
     power: {
       status: <T>() => call(DESKTOP_CHANNELS.powerStatus)() as Promise<T>,
       onSuspend: subscribe(DESKTOP_CHANNELS.powerSuspend.name),
-      onResume: subscribe(DESKTOP_CHANNELS.powerResume.name)
+      onResume: subscribe(DESKTOP_CHANNELS.powerResume.name),
+      onLock: subscribe(DESKTOP_CHANNELS.powerLock.name),
+      onUnlock: subscribe(DESKTOP_CHANNELS.powerUnlock.name)
     },
     network: {
       status: <T>() => call(DESKTOP_CHANNELS.networkStatus)() as Promise<T>,
@@ -80,7 +92,7 @@ export function exposeDesktopApi(): void {
       download: (url, savePath) => call(DESKTOP_CHANNELS.downloadStart)(savePath === undefined ? { url } : { url, savePath }),
       cancelAll: call(DESKTOP_CHANNELS.downloadCancelAll),
       onProgress: (listener) => {
-        const handler = (_event: IpcRendererEvent, progress: unknown) => listener(progress)
+        const handler = (_event: IpcRendererEvent, progress: TransferProgress) => listener(progress)
         ipcRenderer.on(DESKTOP_CHANNELS.transferProgress.name, handler)
         return () => ipcRenderer.removeListener(DESKTOP_CHANNELS.transferProgress.name, handler)
       }
@@ -123,10 +135,23 @@ export function exposeDesktopApi(): void {
       writeJson: (path, value) => call(DESKTOP_CHANNELS.fsWriteJson)({ path, value }),
       list: (path) => call(DESKTOP_CHANNELS.fsList)({ path }) as Promise<readonly FileSystemEntry[]>,
       exists: (path) => call(DESKTOP_CHANNELS.fsExists)({ path }),
+      ensureDir: (path) => call(DESKTOP_CHANNELS.fsEnsureDir)({ path }),
       copy: (source, destination) => call(DESKTOP_CHANNELS.fsCopy)({ source, destination }),
       move: (source, destination) => call(DESKTOP_CHANNELS.fsMove)({ source, destination }),
       remove: (path) => call(DESKTOP_CHANNELS.fsRemove)({ path }),
       mime: (path) => call(DESKTOP_CHANNELS.fsMime)({ path }),
+      watch: async (path, listener) => {
+        const id = await call(DESKTOP_CHANNELS.fsWatchStart)({ path })
+        const handler = (_event: IpcRendererEvent, event: FileWatchEvent): void => {
+          if (event.id !== id) return
+          listener(event as WatchEvent)
+        }
+        ipcRenderer.on(DESKTOP_CHANNELS.fsWatchEvent.name, handler)
+        return () => {
+          ipcRenderer.removeListener(DESKTOP_CHANNELS.fsWatchEvent.name, handler)
+          void call(DESKTOP_CHANNELS.fsWatchStop)({ id })
+        }
+      },
       pathForFile: (file) => webUtils.getPathForFile(file)
     },
     recentFiles: {

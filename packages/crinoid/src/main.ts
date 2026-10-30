@@ -7,6 +7,7 @@ import {
   globalShortcut,
   ipcMain,
   Menu,
+  net,
   Notification,
   powerMonitor,
   safeStorage,
@@ -30,7 +31,7 @@ import { levelFromEnvironment, type Logger } from './logging.js'
 import { createObservability, type Observability, type ObservabilityOptions } from './observability.js'
 import { createSingleInstance, type SingleInstanceApp } from './single-instance.js'
 import { createAutoLaunch, type AutoLaunchOptions } from './auto-launch.js'
-import { findDeepLinkArgument } from './deep-link.js'
+import { findDeepLinkArgument, parseDeepLink } from './deep-link.js'
 import { resolveEnvironment, type EnvironmentSource } from './environment.js'
 import { installGlobalErrorHandlers, type ErrorEventSource, type ErrorScope } from './errors.js'
 import { createAppLifecycle, createShutdownManager, type AppEventTarget } from './lifecycle.js'
@@ -51,13 +52,16 @@ import { createTrayController, type TrayLabels, type TrayPort, type TrayWindow }
 import { createMenuService, defaultApplicationMenuTemplate, type MenuItemTemplate, type MenuPort } from './menu.js'
 import { createContextMenuHandler, type ContextMenuHandler } from './context-menu.js'
 import { createPlatformIntegration, type DockPort, type PlatformIntegration, type TaskbarPort } from './integration.js'
-import { createStore, type Store } from './reactive.js'
 import { createStateSync, type StateSync } from './state-sync.js'
 import { createRecentItems, type RecentItems } from './recent-items.js'
 import { copyPath, ensureDirectory, fileExists, listDirectory, movePath, readJson, readText, removePath, writeJson, writeText } from './fs.js'
 import { detectMimeType } from './mime.js'
 import { watchPath, type Watcher } from './watch.js'
-import { createClipboardService, IMAGE_MIME_TYPE, type ClipboardService } from './clipboard.js'
+import { createPersistentStore } from './persistent.js'
+import { createPreferences, type Preferences } from './preferences.js'
+import { createStore, type Store } from './reactive.js'
+import { createFileStorage, type Storage } from './storage.js'
+import { createClipboardService, HTML_MIME_TYPE, IMAGE_MIME_TYPE, type ClipboardService } from './clipboard.js'
 import { createNotificationService, type NotificationService } from './notifications.js'
 import { createShellService } from './shell.js'
 import { collectSystemInfo, type SystemInfo } from './system.js'
@@ -68,7 +72,6 @@ import { createTransferManager, type TransferManager, type TransferProgress } fr
 import { createUpdateService, resolveChannel, type ReleaseChannel, type UpdateAdapter, type UpdateService } from './tasks.js'
 import { applyProxy, type ProxyConfigInput } from './proxy.js'
 import { installContentSecurityPolicy } from './security.js'
-import { createFileStorage } from './storage.js'
 import type { DesktopConfig } from './config.js'
 
 export interface DesktopMainDeps {
@@ -109,6 +112,12 @@ export interface StateOptions<T = unknown> {
   readonly sync?: boolean
 }
 
+export interface DesktopPreferencesOptions {
+  readonly defaults: Record<string, unknown>
+  readonly key?: string
+  readonly storage?: Storage<Record<string, unknown>>
+}
+
 export interface AuthBridge<User = unknown> {
   readonly sessionManager: {
     login(credentials: { username: string; password: string }): Promise<unknown>
@@ -135,6 +144,7 @@ export interface DesktopMainOptions {
   tray?: TrayOptions
   shortcuts?: Readonly<Record<string, ShortcutAction>>
   state?: StateOptions
+  preferences?: DesktopPreferencesOptions
   recentFiles?: { readonly limit?: number }
   auth?: AuthBridge
   updater?: UpdateService
@@ -294,6 +304,7 @@ interface DesktopServices {
   readonly openChildWindow: (id: string) => boolean
   readonly recent: RecentItems
   readonly store: Store<unknown>
+  readonly preferences: Preferences<Record<string, unknown>>
   readonly watchers: Map<string, Watcher>
   readonly notifyWatchers: (id: string, payload: unknown) => void
   readonly clipboard: ClipboardService
@@ -309,14 +320,18 @@ interface DesktopServices {
 }
 
 function registerFileIpc(registry: ReturnType<typeof createIpcRegistry>, services: DesktopServices): void {
-  registry.register({ channel: DESKTOP_CHANNELS.pickFile, handle: () => services.dialogs.openFile() })
-  registry.register({ channel: DESKTOP_CHANNELS.pickDirectory, handle: () => services.dialogs.openDirectory() })
+  registry.register({ channel: DESKTOP_CHANNELS.pickFile, handle: ({ request }) => services.dialogs.openFile(request) })
+  registry.register({
+    channel: DESKTOP_CHANNELS.pickDirectory,
+    handle: ({ request }) => services.dialogs.openDirectory(request)
+  })
   registry.register({ channel: DESKTOP_CHANNELS.fsReadText, handle: ({ request }) => readText(request.path) })
   registry.register({ channel: DESKTOP_CHANNELS.fsWriteText, handle: ({ request }) => writeText(request.path, request.content) })
   registry.register({ channel: DESKTOP_CHANNELS.fsReadJson, handle: ({ request }) => readJson(request.path) })
   registry.register({ channel: DESKTOP_CHANNELS.fsWriteJson, handle: ({ request }) => writeJson(request.path, request.value) })
   registry.register({ channel: DESKTOP_CHANNELS.fsList, handle: ({ request }) => listDirectory(request.path) })
   registry.register({ channel: DESKTOP_CHANNELS.fsExists, handle: ({ request }) => fileExists(request.path) })
+  registry.register({ channel: DESKTOP_CHANNELS.fsEnsureDir, handle: ({ request }) => ensureDirectory(request.path) })
   registry.register({ channel: DESKTOP_CHANNELS.fsCopy, handle: ({ request }) => copyPath(request.source, request.destination) })
   registry.register({ channel: DESKTOP_CHANNELS.fsMove, handle: ({ request }) => movePath(request.source, request.destination) })
   registry.register({ channel: DESKTOP_CHANNELS.fsRemove, handle: ({ request }) => removePath(request.path) })
@@ -353,8 +368,10 @@ function registerFileIpc(registry: ReturnType<typeof createIpcRegistry>, service
   })
 }
 
+let watchSequence = 0
+
 function startWatch(services: DesktopServices, target: string): string {
-  const id = `watch-${services.watchers.size + 1}-${Date.now()}`
+  const id = `watch-${++watchSequence}`
   const watcher = watchPath(target, (event) => services.notifyWatchers(id, event))
   services.watchers.set(id, watcher)
   return id
@@ -368,6 +385,20 @@ function registerStateIpc(registry: ReturnType<typeof createIpcRegistry>, servic
       services.store.set(request)
     }
   })
+}
+
+function registerPreferencesIpc(
+  registry: ReturnType<typeof createIpcRegistry>,
+  preferences: Preferences<Record<string, unknown>>
+): void {
+  registry.register({ channel: DESKTOP_CHANNELS.preferencesGet, handle: ({ request }) => preferences.get(request.key) })
+  registry.register({
+    channel: DESKTOP_CHANNELS.preferencesSet,
+    handle: ({ request }) => {
+      preferences.set(request.key, request.value)
+    }
+  })
+  registry.register({ channel: DESKTOP_CHANNELS.preferencesAll, handle: () => preferences.all() })
 }
 
 function registerSystemIpc(registry: ReturnType<typeof createIpcRegistry>, services: DesktopServices): void {
@@ -389,6 +420,11 @@ function registerSystemIpc(registry: ReturnType<typeof createIpcRegistry>, servi
   registry.register({ channel: DESKTOP_CHANNELS.clipboardClear, handle: () => services.clipboard.clear() })
   registry.register({ channel: DESKTOP_CHANNELS.clipboardHasImage, handle: () => services.clipboard.hasImage() })
   registry.register({ channel: DESKTOP_CHANNELS.clipboardHasHtml, handle: () => services.clipboard.hasHtml() })
+  registry.register({ channel: DESKTOP_CHANNELS.clipboardReadHtml, handle: () => services.clipboard.readHtml() })
+  registry.register({
+    channel: DESKTOP_CHANNELS.clipboardWriteHtml,
+    handle: ({ request }) => services.clipboard.writeHtml(request)
+  })
   registry.register({ channel: DESKTOP_CHANNELS.clipboardReadImage, handle: () => services.clipboard.readImage() })
   registry.register({
     channel: DESKTOP_CHANNELS.clipboardWriteImage,
@@ -437,13 +473,19 @@ function registerUpdateIpc(registry: ReturnType<typeof createIpcRegistry>, updat
   registry.register({
     channel: DESKTOP_CHANNELS.updateInstall,
     handle: () => {
-      updates.install('')
+      updates.install()
     }
   })
   registry.register({
     channel: DESKTOP_CHANNELS.updateRollback,
     handle: () => {
       updates.rollback()
+    }
+  })
+  registry.register({
+    channel: DESKTOP_CHANNELS.updateChannel,
+    handle: ({ request }) => {
+      updates.setChannel(request)
     }
   })
 }
@@ -488,9 +530,12 @@ function registerDesktopIpc(
       return true
     }
   })
-  registry.register({ channel: DESKTOP_CHANNELS.openFile, handle: () => services.dialogs.openFile() })
-  registry.register({ channel: DESKTOP_CHANNELS.openFiles, handle: () => services.dialogs.openFiles() })
-  registry.register({ channel: DESKTOP_CHANNELS.openDirectory, handle: () => services.dialogs.openDirectory() })
+  registry.register({ channel: DESKTOP_CHANNELS.openFile, handle: ({ request }) => services.dialogs.openFile(request) })
+  registry.register({ channel: DESKTOP_CHANNELS.openFiles, handle: ({ request }) => services.dialogs.openFiles(request) })
+  registry.register({
+    channel: DESKTOP_CHANNELS.openDirectory,
+    handle: ({ request }) => services.dialogs.openDirectory(request)
+  })
   registry.register({ channel: DESKTOP_CHANNELS.saveFile, handle: ({ request }) => services.dialogs.saveFile(request) })
   registry.register({ channel: DESKTOP_CHANNELS.confirm, handle: ({ request }) => services.dialogs.confirm(request) })
   registry.register({ channel: DESKTOP_CHANNELS.readClipboard, handle: () => services.clipboard.readText() })
@@ -526,6 +571,7 @@ function registerDesktopIpc(
   })
   registerFileIpc(registry, services)
   registerStateIpc(registry, services)
+  registerPreferencesIpc(registry, services.preferences)
   registerSystemIpc(registry, services)
   if (services.auth) registerAuthIpc(registry, services.auth)
   if (services.updates) registerUpdateIpc(registry, services.updates)
@@ -590,6 +636,48 @@ async function writeClipboardImage(png: Uint8Array): Promise<void> {
   await clipboard.write([new ClipboardItem({ [IMAGE_MIME_TYPE]: blob })])
 }
 
+async function readClipboardHtml(): Promise<string> {
+  const items = await clipboard.read()
+  for (const item of items) {
+    if (!item.types.includes(HTML_MIME_TYPE)) continue
+    const value = (await item.getType(HTML_MIME_TYPE)) as Blob
+    return value.text()
+  }
+  return ''
+}
+
+async function writeClipboardHtml(html: string): Promise<void> {
+  await clipboard.write([new ClipboardItem({ [HTML_MIME_TYPE]: html })])
+}
+
+function createJsonStorage<T>(filePath: string): Storage<T> {
+  return {
+    get: async () => readJson<T>(filePath).catch(() => null),
+    set: async (_key, value) => writeJson(filePath, value),
+    remove: async () => removePath(filePath),
+    keys: async () => ['state']
+  }
+}
+
+async function createStateStore(options: StateOptions | undefined): Promise<Store<unknown>> {
+  if (!options?.persistPath) return createStore<unknown>(options?.initial ?? null)
+  return createPersistentStore<unknown>({
+    storage: createJsonStorage<unknown>(options.persistPath),
+    key: 'state',
+    defaults: options.initial
+  })
+}
+
+async function createPreferencesStore(
+  options: DesktopPreferencesOptions | undefined
+): Promise<Preferences<Record<string, unknown>>> {
+  return createPreferences({
+    storage: options?.storage ?? createFileStorage<Record<string, unknown>>(join(app.getPath('userData'), 'preferences.json')),
+    defaults: options?.defaults ?? {},
+    ...(options?.key === undefined ? {} : { key: options.key })
+  })
+}
+
 export function createMainProcess(options: DesktopMainOptions): void {
   const config = options.config
   const environment = resolveEnvironment({
@@ -617,7 +705,10 @@ export function createMainProcess(options: DesktopMainOptions): void {
   const forwardDeepLink = (url: string | undefined): void => {
     if (!url) return
     logger.info('Deep link received', { url })
-    windows.get(MAIN_WINDOW_ID)?.webContents.send(DESKTOP_CHANNELS.deepLink.name, url)
+    const link = parseDeepLink(url, config.protocol)
+    windows
+      .get(MAIN_WINDOW_ID)
+      ?.webContents.send(DESKTOP_CHANNELS.deepLink.name, link?.route ?? url, link?.id ?? null)
   }
 
   if (!acquireSingleInstance((commandLine) => forwardDeepLink(findDeepLinkArgument(commandLine, config.protocol)))) {
@@ -662,7 +753,6 @@ export function createMainProcess(options: DesktopMainOptions): void {
   })
 
   const recent = createRecentItems(options.recentFiles ?? {})
-  const store = createStore<unknown>(options.state?.initial ?? null)
   const watchers = new Map<string, Watcher>()
   const syncs: StateSync<unknown, BrowserWindow>[] = []
 
@@ -699,6 +789,8 @@ export function createMainProcess(options: DesktopMainOptions): void {
 
       const dialogs = createDialogService({ dialog: deps.dialog ?? createElectronDialogPort(), resolveWindow: focusedWindow })
       const contextMenu = createContextMenuHandler({ menu, resolveWindow: focusedWindow })
+      const store = await createStateStore(options.state)
+      const preferences = await createPreferencesStore(options.preferences)
 
       if (options.state && options.state.sync !== false) {
         const sync = createStateSync({ store, registry: windows, channel: DESKTOP_CHANNELS.storeChanged.name })
@@ -718,6 +810,8 @@ export function createMainProcess(options: DesktopMainOptions): void {
         clipboard: createClipboardService({
           readText: () => clipboard.readText(),
           writeText: (value) => clipboard.writeText(value),
+          readHtml: () => readClipboardHtml(),
+          writeHtml: (value) => writeClipboardHtml(value),
           readImage: () => readClipboardImage(),
           writeImage: (png) => writeClipboardImage(png),
           has: (mimeType) => clipboard.has(mimeType),
@@ -745,7 +839,7 @@ export function createMainProcess(options: DesktopMainOptions): void {
             getPowerSaveBlockerState: async () => (powerMonitor.isOnBatteryPower() ? 'discharging' : 'charging'),
             getBatteryLevel: async () => 0
           }),
-        network: () => readNetworkStatus({ isOnline: () => true }),
+        network: () => readNetworkStatus({ isOnline: () => net.isOnline() }),
         secrets,
         transfers: createTransferManager({
           session: session.defaultSession,
@@ -768,7 +862,12 @@ export function createMainProcess(options: DesktopMainOptions): void {
         ? createUpdateService({
             adapter: {
               ...options.updaterAdapter,
-              subscribeProgress: (listener) => windows.broadcast(DESKTOP_CHANNELS.updateProgress.name, listener)
+              subscribeProgress: (listener) => {
+                options.updaterAdapter?.subscribeProgress?.((progress) => {
+                  listener(progress)
+                  windows.broadcast(DESKTOP_CHANNELS.updateProgress.name, progress)
+                })
+              }
             },
             currentVersion: app.getVersion(),
             channel: options.releaseChannel ?? resolveChannel('stable'),
@@ -807,6 +906,7 @@ export function createMainProcess(options: DesktopMainOptions): void {
             openChildWindow,
             recent,
             store,
+            preferences,
             watchers,
             notifyWatchers,
             ...(options.auth ? { auth: options.auth } : {}),

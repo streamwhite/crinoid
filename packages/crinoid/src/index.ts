@@ -4,7 +4,7 @@ export {
   createApiError,
   getErrorMessage
 } from './api.js'
-export type { ApiClient, ApiClientOptions } from './api.js'
+export type { ApiClient, ApiClientOptions, ApiTimeoutError } from './api.js'
 
 export { createDesktopConfig, DEFAULT_FEATURES } from './config.js'
 export type { AppConfig, DesktopConfig, FeatureFlags } from './config.js'
@@ -17,7 +17,7 @@ export {
   createShutdownManager,
   withTimeout
 } from './shutdown.js'
-export type { ShutdownManager, ShutdownReport, ShutdownTask } from './shutdown.js'
+export type { ShutdownManager, ShutdownManagerOptions, ShutdownReport, ShutdownTask } from './shutdown.js'
 
 export { createAppLifecycle } from './lifecycle.js'
 export type { AppEventTarget, Lifecycle, LifecycleOptions } from './lifecycle.js'
@@ -102,9 +102,13 @@ export type {
   CrashReportRequest,
   DesktopAPI,
   FeedbackRequest,
+  FileSystemEntry,
+  FileWatchEvent,
   IpcChannel,
   IpcChannelName,
+  IpcEvent,
   IpcHandlerContext,
+  IpcSender,
   IpcMainLike,
   IpcRegistration,
   IpcRegistry,
@@ -133,7 +137,7 @@ export type {
   WindowWebContents
 } from './window.js'
 
-export { createDialogService, isConfirmDialogOptions, isSaveDialogRequest } from './dialogs.js'
+export { createDialogService, isConfirmDialogOptions, isOpenDialogOptions, isSaveDialogRequest } from './dialogs.js'
 export type {
   ConfirmDialogOptions,
   DialogPort,
@@ -177,7 +181,14 @@ export { createPersistentStore } from './persistent.js'
 export type { PersistentStore, PersistentStoreOptions } from './persistent.js'
 
 export { createStateSync } from './state-sync.js'
-export type { StateListener, StateSync, StateSyncOptions, SyncRegistry, SyncWindow } from './state-sync.js'
+export type {
+  StateListener,
+  StateSync,
+  StateSyncOptions,
+  SyncRegistry,
+  SyncWindow,
+  SyncWindowContents
+} from './state-sync.js'
 
 export { createPreferences } from './preferences.js'
 export type { PreferenceListener, Preferences, PreferencesOptions } from './preferences.js'
@@ -389,6 +400,7 @@ export type {
   DesktopMainDeps,
   DesktopMainOptions,
   DesktopObservabilityOptions,
+  DesktopPreferencesOptions,
   DesktopWindowOptions,
   StateOptions,
   TrayOptions

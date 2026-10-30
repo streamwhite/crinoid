@@ -165,6 +165,7 @@ export interface ElectronMock {
   }
   readonly screen: { getAllDisplays(): Array<{ workArea: { x: number; y: number; width: number; height: number } }> }
   readonly powerMonitor: Emitter & { isOnBatteryPower(): boolean }
+  readonly net: { isOnline(): boolean }
   readonly electronVersion: string
 }
 
@@ -510,6 +511,7 @@ export function createElectronMock(): ElectronMock {
     },
     screen: { getAllDisplays: () => [{ workArea: { x: 0, y: 0, width: 1920, height: 1080 } }] },
     powerMonitor,
+    net: { isOnline: () => true },
     electronVersion: '0.0.0'
   }
 }

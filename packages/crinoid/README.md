@@ -229,6 +229,7 @@ Dialogs, context menus, and native integration are reachable from the renderer b
 
 ```ts
 await window.desktop.dialog.openDirectory()
+await window.desktop.dialog.openFile({ title: 'Open note', filters: [{ name: 'Notes', extensions: ['md'] }] })
 await window.desktop.dialog.confirm({ message: 'Delete?', confirmLabel: 'Delete', cancelLabel: 'Keep' })
 await window.desktop.contextMenu.show({ items: [{ id: 'copy', label: 'Copy' }], x, y })
 window.desktop.app.setBadge(3)
@@ -266,6 +267,7 @@ createMainProcess({
   config,
   window,
   state: { initial: { theme: 'light' }, persistPath: join(app.getPath('userData'), 'state.json') },
+  preferences: { defaults: { locale: 'en', zoom: 1 } },
   recentFiles: { limit: 10 }
 })
 ```
@@ -286,7 +288,7 @@ detectMimeType('/tmp/note.txt')
 const watcher = watchPath('/tmp', (event) => console.log(event))
 ```
 
-The renderer reaches the same operations through `window.desktop.fs` (pick, read, write, list, copy, move, remove, mime) and `window.desktop.recentFiles`.
+The renderer reaches the same operations through `window.desktop.fs` (pick, read, write, list, ensureDir, copy, move, remove, mime, watch) and `window.desktop.recentFiles`.
 
 ### Networking
 

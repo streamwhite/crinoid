@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createDialogService, isConfirmDialogOptions, isSaveDialogRequest } from 'crinoid/dialogs'
+import { createDialogService, isConfirmDialogOptions, isOpenDialogOptions, isSaveDialogRequest } from 'crinoid/dialogs'
 
 function createPort(overrides: Record<string, unknown> = {}) {
   return {
@@ -70,6 +70,14 @@ describe('dialog request validation', () => {
     expect(isSaveDialogRequest({ defaultPath: '/tmp' })).toBe(true)
     expect(isSaveDialogRequest({ defaultPath: 1 })).toBe(false)
     expect(isSaveDialogRequest(null)).toBe(false)
+  })
+
+  it('accepts open dialog presentation options', () => {
+    const filters = [{ name: 'Text', extensions: ['txt', 'md'] }]
+    expect(isOpenDialogOptions({ title: 'Open', defaultPath: '/tmp', buttonLabel: 'Choose', filters })).toBe(true)
+    expect(isOpenDialogOptions({ filters: 'text' })).toBe(false)
+    expect(isOpenDialogOptions({ filters: [{ name: 'Text', extensions: 'txt' }] })).toBe(false)
+    expect(isOpenDialogOptions({ title: 1 })).toBe(false)
   })
 
   it('requires confirm labels and a valid type', () => {

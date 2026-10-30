@@ -1,10 +1,11 @@
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createCollectingLogger, createElectronMock, waitFor } from 'crinoid/testing'
 import type { ElectronMock, MockWindow } from 'crinoid/testing'
 import { createDesktopConfig } from 'crinoid/config'
+import { createMemoryStorage } from 'crinoid/storage'
 import { saveWindowState } from 'crinoid/window'
 
 type FullMock = ElectronMock & {
@@ -195,6 +196,72 @@ describe('main process composition', () => {
     await waitFor(() => electron.ipcMain.handlers.has('auth.login'))
 
     expect(electron.ipcMain.handlers.has('auth.session')).toBe(true)
+  })
+
+  it('registers preference IPC backed by the configured store', async () => {
+    const { electron, createMainProcess } = await load()
+    createMainProcess({
+      config: createDesktopConfig({ appName: 'App' }),
+      window: { preloadPath: '/p.js', rendererFile: '/i.html' },
+      preferences: { defaults: { theme: 'light' }, storage: createMemoryStorage<Record<string, unknown>>() },
+      deps: { logger: createCollectingLogger().logger }
+    })
+
+    electron.app.emit('ready')
+    await waitFor(() => electron.ipcMain.handlers.has('preferences.all'))
+
+    const event = { sender: { getURL: () => 'file:///app/index.html' } }
+    await expect(electron.ipcMain.invoke('preferences.all', event)).resolves.toEqual({ theme: 'light' })
+    await electron.ipcMain.invoke('preferences.set', event, { key: 'theme', value: 'dark' })
+    await expect(electron.ipcMain.invoke('preferences.get', event, { key: 'theme' })).resolves.toBe('dark')
+  })
+
+  it('persists the synced store to the configured state path', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'crinoid-state-'))
+    directories.push(directory)
+    const statePath = join(directory, 'state.json')
+
+    const { electron, createMainProcess } = await load()
+    createMainProcess({
+      config: createDesktopConfig({ appName: 'App' }),
+      window: { preloadPath: '/p.js', rendererFile: '/i.html' },
+      state: { initial: { theme: 'light' }, persistPath: statePath },
+      deps: { logger: createCollectingLogger().logger }
+    })
+
+    electron.app.emit('ready')
+    await waitFor(() => electron.ipcMain.handlers.has('store.set'))
+
+    const event = { sender: { getURL: () => 'file:///app/index.html' } }
+    await electron.ipcMain.invoke('store.set', event, { theme: 'dark' })
+
+    await waitFor(async () => {
+      try {
+        return JSON.parse(await readFile(statePath, 'utf8')).theme === 'dark'
+      } catch {
+        return false
+      }
+    })
+  })
+
+  it('forwards parsed deep links to the main window', async () => {
+    const { electron, createMainProcess } = await load()
+    createMainProcess({
+      config: createDesktopConfig({ appName: 'App', protocol: 'myapp' }),
+      window: { preloadPath: '/p.js', rendererFile: '/i.html' },
+      deps: { logger: createCollectingLogger().logger }
+    })
+
+    electron.app.emit('ready')
+    await waitFor(() => electron.app.listenerCount('open-url') > 0)
+
+    electron.app.emit('open-url', { preventDefault: () => {} }, 'myapp://editor/42')
+
+    const window = electron.BrowserWindow.getAllWindows()[0]
+    expect(window?.webContents.messages).toContainEqual({
+      channel: 'app.deep-link',
+      args: ['editor', '42']
+    })
   })
 
   it('opens a named child window once and reuses it on repeat opens', async () => {
