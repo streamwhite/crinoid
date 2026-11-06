@@ -14,6 +14,12 @@ Peer dependencies you must install yourself:
 pnpm add react react-dom electron
 ```
 
+The optional UI layer (`crinoid/ui`, `crinoid/blocks`, `crinoid/charts`) uses Tailwind v4:
+
+```bash
+pnpm add -D tailwindcss @tailwindcss/vite
+```
+
 ## Usage
 
 ### Main process
@@ -74,6 +80,66 @@ declare global {
   }
 }
 ```
+
+### UI components, blocks, and charts
+
+The UI layer is optional and Tailwind-based. Import the package stylesheet once, then add the Tailwind Vite
+plugin:
+
+```css
+/* src/renderer/index.css */
+@import "crinoid/ui/styles.css";
+```
+
+```ts
+// vite.config.mts
+import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
+import { createRendererViteConfig } from 'crinoid/vite'
+
+export default createRendererViteConfig({
+  root: 'src/renderer',
+  plugins: [react(), tailwindcss()]
+})
+```
+
+```tsx
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from 'crinoid/ui'
+import { AreaChart } from 'crinoid/charts'
+import { DashboardBlock, StatCard, StatsGrid } from 'crinoid/blocks'
+
+function Dashboard() {
+  return (
+    <DashboardBlock title="Overview" description="Last 7 days" actions={<Button>Refresh</Button>}>
+      <StatsGrid>
+        <StatCard label="Users" value="1,248" trend={<Badge>+12%</Badge>} />
+      </StatsGrid>
+      <Card>
+        <CardHeader>
+          <CardTitle>Traffic</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AreaChart
+            data={[{ day: 'Mon', visits: 120 }, { day: 'Tue', visits: 180 }]}
+            xKey="day"
+            series={[{ key: 'visits', label: 'Visits' }]}
+            height={240}
+          />
+        </CardContent>
+      </Card>
+    </DashboardBlock>
+  )
+}
+```
+
+- `crinoid/ui` exports shadcn-derived primitives: button, input, textarea, label, card, badge, alert,
+  avatar, separator, skeleton, switch, checkbox, select, dialog, dropdown menu, tabs, table, tooltip,
+  progress, and chart primitives.
+- `crinoid/blocks` exports composed `PageBlock`, `SettingsBlock`, `AuthBlock`, `DashboardBlock`, and
+  `EmptyBlock` layouts built from those primitives.
+- `crinoid/charts` exports `LineChart`, `AreaChart`, `BarChart`, `PieChart`, and `DonutChart` wrappers over
+  Recharts, plus the low-level shadcn `ChartContainer` / `ChartTooltip` / `ChartLegend` primitives.
+- `cn` is exported from `crinoid/ui` for merging Tailwind classes.
 
 ### Forge and Vite configuration
 

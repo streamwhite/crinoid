@@ -98,7 +98,7 @@ createRoot(document.getElementById('root')!).render(
 ```
 
 `crinoid/react` also exports `LocaleProvider`, `ThemeProvider`, `useKeyboardShortcuts`, and generic
-loading/empty/error states. `ErrorBoundary` forwards renderer errors to `onError`; send them to the main
+loading/empty/error states. For Tailwind-based primitives, blocks, and charts, use the `crinoid-ui` skill. `ErrorBoundary` forwards renderer errors to `onError`; send them to the main
 process with `desktop.crash.report({ message, stack, context })`.
 
 ## Internationalization

@@ -75,7 +75,24 @@
 | `.../api` | `createApiClient`, `ApiError`, `getErrorMessage` |
 | `.../forge` | `createForgeConfig`, `securePackagerConfig` |
 | `.../vite` | `createMainViteConfig`, `createPreloadViteConfig`, `createRendererViteConfig` |
+| `.../ui` | shadcn-derived primitives, `cn`, and chart primitives |
+| `.../ui/styles.css` | Tailwind v4 theme tokens and base styles |
+| `.../blocks` | composed page, settings, auth, dashboard, and empty blocks |
+| `.../charts` | Recharts wrappers (`LineChart`, `AreaChart`, `BarChart`, `PieChart`, `DonutChart`) |
 | `.../types` | shared TypeScript types |
+
+## UI components
+
+- **Primitives** — `crinoid/ui` re-exports shadcn-derived button, input, textarea, label, card, badge,
+  alert, avatar, separator, skeleton, switch, checkbox, select, dialog, dropdown-menu, tabs, table,
+  tooltip, progress, and chart primitives. `cn` merges Tailwind classes.
+- **Blocks** — `crinoid/blocks` composes `PageBlock`, `SettingsBlock`, `AuthBlock`, `DashboardBlock`
+  (with `StatsGrid`, `StatCard`, `ChartPanel`), and `EmptyBlock` from the primitives.
+- **Charts** — `crinoid/charts` wraps Recharts in `LineChart`, `AreaChart`, `BarChart`, `PieChart`, and
+  `DonutChart`, and re-exports the low-level `ChartContainer` / `ChartTooltip` / `ChartLegend` primitives.
+- **Styling** — import `crinoid/ui/styles.css` once in the renderer and enable `@tailwindcss/vite`.
+  The stylesheet defines light/dark tokens (`--chart-1`…`--chart-5`) and supports both `.dark` and
+  `[data-theme="dark"]`.
 
 ## Foundational capabilities
 

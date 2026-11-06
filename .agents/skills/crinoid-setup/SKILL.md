@@ -124,6 +124,7 @@ lists every required consumer change in `CHANGELOG.md`. Application source is ne
 | --- | --- |
 | Main process, windows, tray, menus, shortcuts, lifecycle | `crinoid-main-process` |
 | Preload bridge, renderer API, React, i18n | `crinoid-renderer` |
+| UI primitives, blocks, charts, Tailwind | `crinoid-ui` |
 | State, files, storage, SQLite, import/export | `crinoid-data` |
 | HTTP, WebSocket, SSE, auth, tasks, updates | `crinoid-services` |
 | Clipboard, shell, power, secrets, security, logging | `crinoid-system` |

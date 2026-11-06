@@ -4,6 +4,10 @@
 
 ### Added
 
+- `./ui` — shadcn-derived Tailwind primitives (button, input, card, dialog, select, tabs, table, and more), `cn`, and chart primitives.
+- `./blocks` — composed page, settings, auth, dashboard/stat/chart-panel, and empty blocks.
+- `./charts` — Recharts wrappers for line, area, bar, pie, and donut charts.
+- `./ui/styles.css` — Tailwind v4 light/dark theme tokens and base styles.
 - `./ipc` — renderer bridge now accepts presentation options for every dialog, exposes `fs.watch` / `fs.ensureDir` and clipboard HTML read/write, forwards power lock/unlock events, and registers `preferences.*` and `updates.setChannel` handlers.
 - `./main` — `createMainProcess` accepts a `preferences` option (defaults + optional storage), persists `state` when `persistPath` is set, reports real network status, and forwards parsed deep links to the renderer.
 

@@ -91,6 +91,7 @@ npx skills add streamwhite/desktop-dev-template-electron -g
 | [`crinoid-setup`](.agents/skills/crinoid-setup/SKILL.md) | scaffold, entry files, Forge/Vite, build and release |
 | [`crinoid-main-process`](.agents/skills/crinoid-main-process/SKILL.md) | `createMainProcess`, windows, tray, menus, shortcuts, lifecycle |
 | [`crinoid-renderer`](.agents/skills/crinoid-renderer/SKILL.md) | preload bridge, `window.desktop`, typed IPC, React, i18n |
+| [`crinoid-ui`](.agents/skills/crinoid-ui/SKILL.md) | shadcn primitives, blocks, Recharts wrappers, Tailwind theming |
 | [`crinoid-data`](.agents/skills/crinoid-data/SKILL.md) | state, preferences, files, storage, SQLite, import/export |
 | [`crinoid-services`](.agents/skills/crinoid-services/SKILL.md) | HTTP, WebSocket, SSE, auth, tasks, updates |
 | [`crinoid-system`](.agents/skills/crinoid-system/SKILL.md) | clipboard, shell, power, secrets, security, observability |
@@ -124,6 +125,12 @@ Dialogs (open/save/directory/confirm), tray with minimize/close-to-tray, role-ba
 menus, global shortcuts, custom title bars, fullscreen and always-on-top, plus Dock/Taskbar badges,
 attention, progress, and flashing. Available from `crinoid/dialogs`, `crinoid/tray`, `crinoid/menu`,
 `crinoid/context-menu`, `crinoid/shortcuts`, and `crinoid/integration`.
+
+### UI components and charts
+
+shadcn-derived Tailwind primitives, composed page/settings/auth/dashboard blocks, and Recharts wrappers
+(`crinoid/ui`, `crinoid/blocks`, `crinoid/charts`). Import `crinoid/ui/styles.css` once and enable
+`@tailwindcss/vite`.
 
 ### State and persistence
 
@@ -160,7 +167,7 @@ secret scrubbing, metrics, tracing, and feedback reports (`crinoid/tasks`, `crin
 
 ### System, security, and common capabilities
 
-Clipboard (text and PNG images), native notifications, allowlisted shell operations, system info, battery
+Clipboard (text, HTML, and PNG images), native notifications, allowlisted shell operations, system info, battery
 and power events, connectivity status, OS-keychain secrets, and auto-launch. Security primitives include CSP
 construction, external-URL and permission allowlists, and sender validation (`crinoid/clipboard`,
 `crinoid/notifications`, `crinoid/shell`, `crinoid/system`, `crinoid/power`, `crinoid/network`,
@@ -199,7 +206,7 @@ import { createDesktopApiStub, installDesktopBridge } from 'crinoid/testing/reac
 - [`packages/crinoid/README.md`](packages/crinoid/README.md) — copy-paste usage for every feature.
 - [`packages/crinoid/API.md`](packages/crinoid/API.md) — full public API by entry point.
 - [`packages/crinoid/CHANGELOG.md`](packages/crinoid/CHANGELOG.md) — released changes and migration notes.
-- [`.agents/skills/`](.agents/skills/) — focused agent skills for setup, main process, renderer, data, services, system, app features, and testing.
+- [`.agents/skills/`](.agents/skills/) — focused agent skills for setup, main process, renderer, UI, data, services, system, app features, and testing.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/TESTING-PLAN.md`](docs/TESTING-PLAN.md), and
   [`docs/SECURITY.md`](docs/SECURITY.md) — design and policy notes.
 
