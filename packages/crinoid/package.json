@@ -1,6 +1,6 @@
 {
   "name": "crinoid",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Reusable Electron main/preload/renderer infrastructure as a normal package.",
   "license": "Apache-2.0",
   "author": "Template Maintainers",
