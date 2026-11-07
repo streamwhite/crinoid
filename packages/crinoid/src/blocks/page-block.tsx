@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { cn } from '../ui/lib/utils.js'
+import { Page, PageHeader, Stack } from '../layout.js'
 
 export interface PageBlockProps {
   readonly title: ReactNode
@@ -19,15 +19,13 @@ export function PageBlock({
   contentClassName
 }: PageBlockProps): React.JSX.Element {
   return (
-    <section className={cn('flex flex-col gap-6', className)}>
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="grid gap-1.5">
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-          {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
-        </div>
-        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
-      </header>
-      {children ? <div className={cn('flex flex-col gap-6', contentClassName)}>{children}</div> : null}
-    </section>
+    <Page className={className}>
+      <PageHeader title={title} description={description} actions={actions} />
+      {children ? (
+        <Stack gap="lg" className={contentClassName}>
+          {children}
+        </Stack>
+      ) : null}
+    </Page>
   )
 }

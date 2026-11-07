@@ -128,9 +128,10 @@ attention, progress, and flashing. Available from `crinoid/dialogs`, `crinoid/tr
 
 ### UI components and charts
 
-shadcn-derived Tailwind primitives, composed page/settings/auth/dashboard blocks, and Recharts wrappers
-(`crinoid/ui`, `crinoid/blocks`, `crinoid/charts`). Import `crinoid/ui/styles.css` once and enable
-`@tailwindcss/vite`.
+shadcn-derived Tailwind primitives, composed page/settings/auth/dashboard blocks, Recharts wrappers, and
+layout-only presets (`crinoid/ui`, `crinoid/blocks`, `crinoid/charts`, `crinoid/layout`, `crinoid/patterns`).
+Feature code chooses arrangement with `Page`, `Stack`, `Grid`, `Split`, and similar presets instead of
+styling each component. Import `crinoid/ui/styles.css` once and enable `@tailwindcss/vite`.
 
 ### State and persistence
 

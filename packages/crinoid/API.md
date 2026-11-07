@@ -76,6 +76,8 @@
 | `.../forge` | `createForgeConfig`, `securePackagerConfig` |
 | `.../vite` | `createMainViteConfig`, `createPreloadViteConfig`, `createRendererViteConfig` |
 | `.../ui` | shadcn-derived primitives, `cn`, and chart primitives |
+| `.../layout` | layout-only presets: AppLayout, Page, PageHeader, Section, Stack, Row, Grid, Container, Toolbar, Split |
+| `.../patterns` | FormField, FormGrid, ConfirmDialog, DataList, DataListRow, NavList, NavGroup, NavItem |
 | `.../ui/styles.css` | Tailwind v4 theme tokens and base styles |
 | `.../blocks` | composed page, settings, auth, dashboard, and empty blocks |
 | `.../charts` | Recharts wrappers (`LineChart`, `AreaChart`, `BarChart`, `PieChart`, `DonutChart`) |
@@ -88,6 +90,12 @@
   tooltip, progress, and chart primitives. `cn` merges Tailwind classes.
 - **Blocks** — `crinoid/blocks` composes `PageBlock`, `SettingsBlock`, `AuthBlock`, `DashboardBlock`
   (with `StatsGrid`, `StatCard`, `ChartPanel`), and `EmptyBlock` from the primitives.
+- **Layout-first presets** — `crinoid/layout` provides `AppLayout`, `Page`, `PageHeader`, `Section`,
+  `Stack`, `Row`, `Grid`, `Container`, `Toolbar`, and `Split` with gap/column presets. Feature code
+  chooses arrangement only; component styling stays in the defaults.
+- **Patterns** — `crinoid/patterns` provides `FormField`, `FormGrid`, `ConfirmDialog`, `DataList`, and
+  `DataListRow` and `NavList` / `NavGroup` / `NavItem` for common forms, confirmations, list rows, and
+  sidebar navigation.
 - **Charts** — `crinoid/charts` wraps Recharts in `LineChart`, `AreaChart`, `BarChart`, `PieChart`, and
   `DonutChart`, and re-exports the low-level `ChartContainer` / `ChartTooltip` / `ChartLegend` primitives.
 - **Styling** — import `crinoid/ui/styles.css` once in the renderer and enable `@tailwindcss/vite`.

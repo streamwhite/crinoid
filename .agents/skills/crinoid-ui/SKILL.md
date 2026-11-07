@@ -1,6 +1,6 @@
 ---
 name: crinoid-ui
-description: Build renderer interfaces with crinoid's shadcn-derived UI layer, composed blocks, and Recharts wrappers. Use when adding Tailwind styling, buttons, forms, dialogs, tables, tabs, dashboard/settings/auth layouts, or line/area/bar/pie/donut charts. Triggers on crinoid/ui, crinoid/blocks, crinoid/charts, crinoid/ui/styles.css, shadcn, Tailwind v4, Recharts, ChartContainer, StatCard, PageBlock.
+description: Build renderer interfaces with crinoid's layout-first UI layer. Use when adding Tailwind styling, page/app layouts, stacks/grids/splits, shadcn primitives, forms, dialogs, tables, tabs, dashboard/settings/auth blocks, or line/area/bar/pie/donut charts. Triggers on crinoid/ui, crinoid/layout, crinoid/patterns, crinoid/blocks, crinoid/charts, crinoid/ui/styles.css, shadcn, Tailwind v4, Recharts, PageBlock.
 ---
 
 # Crinoid UI, blocks, and charts
@@ -65,13 +65,76 @@ All components are shadcn-derived: they accept `className`, forward standard HTM
     <CardDescription>Update your account</CardDescription>
     <CardAction><Button size="sm">Save</Button></CardAction>
   </CardHeader>
-  <CardContent className="grid gap-4">
-    <Label htmlFor="name">Name</Label>
-    <Input id="name" />
-    <Switch aria-label="Notifications" />
+  <CardContent>
+    <Stack gap="md">
+      <Label htmlFor="name">Name</Label>
+      <Input id="name" />
+      <Switch aria-label="Notifications" />
+    </Stack>
   </CardContent>
 </Card>
 ```
+
+## Layout-first preset
+
+The goal is to manage **arrangement** only. Pick a layout preset; do not restyle components per screen.
+
+```tsx
+import { AppLayout, Grid, Page, PageHeader, Section, Split, Stack, Toolbar } from 'crinoid/layout'
+
+<AppLayout sidebar={<nav>Navigation</nav>} header={<span>My App</span>}>
+  <Page>
+    <PageHeader title="Projects" description="Manage your work" actions={<Button>New project</Button>} />
+    <Section title="Overview">
+      <Grid cols={1} smCols={2} xlCols={4} gap="md">
+        <StatCard label="Active" value="12" />
+      </Grid>
+    </Section>
+    <Split primary={<Card>Main content</Card>} secondary={<Card>Details</Card>} />
+  </Page>
+</AppLayout>
+```
+
+- `AppLayout` — sidebar + header + scrollable content.
+- `Page` / `PageHeader` / `Section` — page and section rhythm with default spacing.
+- `Stack` / `Row` / `Grid` / `Container` / `Toolbar` — arrangement presets (`gap`, `align`, `justify`,
+  responsive columns, max width).
+- `Split` — primary/secondary two-pane layout.
+
+Use `className` only for layout-safe overrides (width, alignment, visibility), not colors, borders, padding,
+typography, or component states.
+
+## Patterns
+
+`crinoid/patterns` covers common compositions that otherwise invite one-off styling:
+
+```tsx
+import { ConfirmDialog, DataList, DataListRow, FormField, FormGrid } from 'crinoid/patterns'
+
+<FormGrid>
+  <FormField label="Name" htmlFor="name" required description="Shown to your team">
+    <Input id="name" />
+  </FormField>
+</FormGrid>
+
+<DataList>
+  <DataListRow title="report.pdf" description="2.4 MB" meta="Today" actions={<Button size="sm">Open</Button>} />
+</DataList>
+
+<ConfirmDialog
+  open={open}
+  onOpenChange={setOpen}
+  title="Delete project?"
+  description="This cannot be undone."
+  confirmLabel="Delete"
+  destructive
+  onConfirm={deleteProject}
+/>
+```
+
+`FormField` handles label, description, error, and required state; `FormGrid` handles responsive form
+columns; `ConfirmDialog` handles the destructive confirmation flow; `DataList` handles card-like list rows;
+`NavList` / `NavGroup` / `NavItem` handle sidebar navigation (active state, icons, badges, links).
 
 ## Blocks
 
@@ -130,7 +193,9 @@ them with Recharts primitives only when a wrapper cannot express the chart.
 
 - Keep colors on the token system (`bg-background`, `text-muted-foreground`, `border-border`, chart vars).
 - Use `cn` instead of string concatenation for conditional classes.
-- Prefer the block layouts and wrappers; do not re-copy shadcn component source into the app.
+- Prefer layout presets, patterns, and blocks; do not re-copy shadcn component source into the app.
+- Do not restyle primitives per screen. Add a variant to the wrapper layer or a layout preset if a new
+  visual pattern is genuinely reusable.
 - All user-facing labels belong in `react-intl` messages, including chart labels and empty states.
 - Tailwind scans the package source through `crinoid/ui/styles.css`; keep custom component classes in app
   files so the app's Tailwind build discovers them.

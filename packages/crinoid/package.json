@@ -340,6 +340,14 @@
     "./blocks": {
       "types": "./src/blocks/index.ts",
       "default": "./src/blocks/index.ts"
+    },
+    "./layout": {
+      "types": "./src/layout.tsx",
+      "default": "./src/layout.tsx"
+    },
+    "./patterns": {
+      "types": "./src/patterns.tsx",
+      "default": "./src/patterns.tsx"
     }
   },
   "peerDependencies": {

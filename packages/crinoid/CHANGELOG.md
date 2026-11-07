@@ -5,6 +5,8 @@
 ### Added
 
 - `./ui` — shadcn-derived Tailwind primitives (button, input, card, dialog, select, tabs, table, and more), `cn`, and chart primitives.
+- `./layout` — layout-only presets (`AppLayout`, `Page`, `PageHeader`, `Section`, `Stack`, `Row`, `Grid`, `Container`, `Toolbar`, `Split`) so features manage arrangement, not component styling.
+- `./patterns` — `FormField`, `FormGrid`, `ConfirmDialog`, `DataList`, and `DataListRow` for common forms and lists.
 - `./blocks` — composed page, settings, auth, dashboard/stat/chart-panel, and empty blocks.
 - `./charts` — Recharts wrappers for line, area, bar, pie, and donut charts.
 - `./ui/styles.css` — Tailwind v4 light/dark theme tokens and base styles.

@@ -107,30 +107,53 @@ export default createRendererViteConfig({
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from 'crinoid/ui'
 import { AreaChart } from 'crinoid/charts'
 import { DashboardBlock, StatCard, StatsGrid } from 'crinoid/blocks'
+import { AppLayout, Grid, Page, PageHeader, Split, Stack } from 'crinoid/layout'
 
 function Dashboard() {
   return (
-    <DashboardBlock title="Overview" description="Last 7 days" actions={<Button>Refresh</Button>}>
-      <StatsGrid>
-        <StatCard label="Users" value="1,248" trend={<Badge>+12%</Badge>} />
-      </StatsGrid>
-      <Card>
-        <CardHeader>
-          <CardTitle>Traffic</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AreaChart
-            data={[{ day: 'Mon', visits: 120 }, { day: 'Tue', visits: 180 }]}
-            xKey="day"
-            series={[{ key: 'visits', label: 'Visits' }]}
-            height={240}
-          />
-        </CardContent>
-      </Card>
-    </DashboardBlock>
+    <AppLayout sidebar={<nav>Sidebar</nav>} header={<span>My App</span>}>
+      <Page>
+        <PageHeader title="Overview" description="Last 7 days" actions={<Button>Refresh</Button>} />
+        <Grid cols={1} smCols={2} xlCols={4} gap="md">
+          <StatCard label="Users" value="1,248" trend={<Badge>+12%</Badge>} />
+        </Grid>
+        <Split
+          primary={
+            <Card>
+              <CardHeader>
+                <CardTitle>Traffic</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AreaChart
+                  data={[{ day: 'Mon', visits: 120 }, { day: 'Tue', visits: 180 }]}
+                  xKey="day"
+                  series={[{ key: 'visits', label: 'Visits' }]}
+                  height={240}
+                />
+              </CardContent>
+            </Card>
+          }
+          secondary={<Stack>Recent activity</Stack>}
+        />
+      </Page>
+    </AppLayout>
   )
 }
 ```
+
+### Layout-first defaults
+
+The UI layer is designed so feature code only chooses **arrangement**, not per-component styling:
+
+- `crinoid/ui` components ship complete default styles and intent variants (`variant`, `size`). Prefer
+  those over `className`; reserve `className` for layout-safe overrides such as width or alignment.
+- `crinoid/layout` provides `AppLayout`, `Page`, `PageHeader`, `Section`, `Stack`, `Row`, `Grid`,
+  `Container`, `Toolbar`, and `Split` with gap/column presets.
+- `crinoid/patterns` provides `FormField`, `FormGrid`, `ConfirmDialog`, `DataList`, `DataListRow`, and
+  `NavList` / `NavGroup` / `NavItem` so forms, confirmations, list rows, and sidebar navigation do not need
+  hand-written markup or styles.
+- `crinoid/blocks` provides page-scale scaffolds: `PageBlock`, `SettingsBlock`, `AuthBlock`,
+  `DashboardBlock`, and `EmptyBlock`.
 
 - `crinoid/ui` exports shadcn-derived primitives: button, input, textarea, label, card, badge, alert,
   avatar, separator, skeleton, switch, checkbox, select, dialog, dropdown menu, tabs, table, tooltip,
@@ -139,6 +162,8 @@ function Dashboard() {
   `EmptyBlock` layouts built from those primitives.
 - `crinoid/charts` exports `LineChart`, `AreaChart`, `BarChart`, `PieChart`, and `DonutChart` wrappers over
   Recharts, plus the low-level shadcn `ChartContainer` / `ChartTooltip` / `ChartLegend` primitives.
+- `crinoid/layout` and `crinoid/patterns` keep app chrome layout-only: choose page, stack, grid, split, and
+  navigation presets instead of styling each element.
 - `cn` is exported from `crinoid/ui` for merging Tailwind classes.
 
 ### Forge and Vite configuration

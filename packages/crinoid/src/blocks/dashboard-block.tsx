@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Page, PageHeader } from '../layout.js'
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card.js'
 import { cn } from '../ui/lib/utils.js'
 
@@ -18,18 +19,12 @@ export function DashboardBlock({
   className
 }: DashboardBlockProps): React.JSX.Element {
   return (
-    <section className={cn('flex flex-col gap-6', className)}>
+    <Page className={className}>
       {title || description || actions ? (
-        <header className="flex flex-wrap items-start justify-between gap-4">
-          <div className="grid gap-1.5">
-            {title ? <h1 className="text-2xl font-semibold tracking-tight">{title}</h1> : null}
-            {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
-          </div>
-          {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
-        </header>
+        <PageHeader title={title} description={description} actions={actions} />
       ) : null}
       <div className="flex flex-col gap-6">{children}</div>
-    </section>
+    </Page>
   )
 }
 
