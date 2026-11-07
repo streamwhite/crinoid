@@ -1,6 +1,6 @@
 {
   "name": "crinoid",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Workspace for the crinoid package, scaffold, reference app, and tests.",
   "author": "Template Maintainers",
   "license": "Apache-2.0",
