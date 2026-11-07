@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.1 - 2026-11-07
+
 ### Added
 
 - `./ui` — shadcn-derived Tailwind primitives (button, input, card, dialog, select, tabs, table, and more), `cn`, and chart primitives.
